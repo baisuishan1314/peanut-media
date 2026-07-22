@@ -1,0 +1,470 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>花生传媒 Peanut Media | RCU League 立直麻将战队</title>
+<meta name="description" content="花生传媒 Peanut Media 立直麻将战队 - RCU League 2026赛季参赛队伍。四人战队：花生、百岁山、有风南来、南风SW。比赛直播：B站 RCU立直联盟">
+<link rel="icon" href="logo.jpg" type="image/jpeg">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080c;--bg2:#0e0e16;--card:#13131f;--card-hover:#181828;
+  --border:rgba(255,255,255,0.05);--border-h:rgba(255,255,255,0.1);
+  --red:#C41E3A;--red2:#E63950;--rg:rgba(196,30,58,0.18);
+  --gold:#D4AF37;--gold2:#F0C840;--gg:rgba(212,175,55,0.15);
+  --w:#fff;--t1:#eaecf0;--t2:#9ca3af;--t3:#555;
+  --green:#2E8B57;--blue:#4169E1;
+  --pink:#EC4899;--cyan:#06B6D4;--orange:#F97316;--purple:#A855F7;
+  --silver:#c0c0c0;--bronze:#cd7f32;
+  --mono:'JetBrains Mono','SF Mono','Cascadia Code','Consolas',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  --trans:all .3s cubic-bezier(.25,.46,.45,.94);
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased}
+::selection{background:var(--red);color:#fff}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--red);border-radius:3px}
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+.navbar{position:fixed;top:0;left:0;width:100%;z-index:100;padding:12px 0;transition:var(--trans);border-bottom:1px solid transparent}
+.navbar.scrolled{background:rgba(8,8,12,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-color:var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between}
+.logo-wrap{display:flex;align-items:center;gap:10px}
+.logo-wrap img{width:36px;height:36px;border-radius:8px;object-fit:cover}
+.logo-text{line-height:1.15}
+.logo-text .en{font-size:.68rem;color:var(--gold);letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
+.logo-text .cn{font-size:.88rem;font-weight:800}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-size:.82rem;color:var(--t2);font-weight:500;position:relative;transition:var(--trans)}
+.nav-links a::after{content:'';position:absolute;bottom:-5px;left:0;width:0;height:2px;background:var(--red);transition:var(--trans);border-radius:2px}
+.nav-links a:hover,.nav-links a.active{color:var(--t1)}
+.nav-links a:hover::after,.nav-links a.active::after{width:100%}
+.nav-toggle{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:4px}
+.nav-toggle span{width:22px;height:2px;background:var(--t1);border-radius:2px;transition:var(--trans)}
+.nav-toggle.open span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.nav-toggle.open span:nth-child(2){opacity:0}
+.nav-toggle.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+
+/* LIVE BADGE */
+.live-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--red);color:#fff;border-radius:100px;font-size:.7rem;font-weight:700;animation:pulse-live 2s infinite}
+.live-badge .live-dot{width:7px;height:7px;background:#fff;border-radius:50%}
+@keyframes pulse-live{0%,100%{box-shadow:0 0 0 0 rgba(196,30,58,.6)}50%{box-shadow:0 0 0 8px rgba(196,30,58,0)}}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;padding:100px 0 60px;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 15% 15%,rgba(234,179,8,.09) 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,rgba(196,30,58,.12) 0%,transparent 50%);pointer-events:none}
+.hero-orbs{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hero-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15}
+.hero-orb.a{width:400px;height:400px;background:var(--gold);top:-10%;left:-5%}
+.hero-orb.b{width:300px;height:300px;background:var(--red);bottom:10%;right:-5%}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;position:relative;z-index:2}
+.hero-content{max-width:560px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.2);border-radius:100px;font-size:.72rem;color:var(--gold2);font-weight:600;margin-bottom:24px}
+.hero-badge .dot{width:7px;height:7px;background:var(--gold);border-radius:50%;animation:pulse2 2s infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(1.8rem,4vw,3.2rem);font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:16px}
+.hero h1 .gold{color:var(--gold)}
+.hero h1 .red{color:var(--red2)}
+.hero p{font-size:.95rem;color:var(--t2);margin-bottom:32px;line-height:1.7;max-width:460px}
+.hero-meta{display:flex;gap:24px;margin-bottom:28px;flex-wrap:wrap}
+.hero-meta-item{text-align:center}
+.hero-meta-item .num{font-family:var(--mono);font-size:1.6rem;font-weight:900;color:var(--gold);line-height:1}
+.hero-meta-item .lbl{font-size:.68rem;color:var(--t3);margin-top:4px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-red{padding:12px 28px;background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;font-weight:700;font-size:.88rem;border-radius:100px;border:none;cursor:pointer;transition:var(--trans);display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 20px rgba(196,30,58,.35)}
+.btn-red:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(196,30,58,.5)}
+.btn-outline{padding:12px 28px;background:transparent;color:var(--t1);font-weight:600;font-size:.88rem;border-radius:100px;border:1px solid var(--border);cursor:pointer;transition:var(--trans);display:inline-flex;align-items:center;gap:6px}
+.btn-outline:hover{border-color:var(--gold);background:rgba(234,179,8,.06)}
+.hero-visual{display:flex;flex-direction:column;align-items:center;gap:24px}
+.hero-logo{width:100%;max-width:340px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid var(--border);transition:var(--trans)}
+.hero-logo:hover{transform:scale(1.03)}
+.rcu-badge{display:flex;align-items:center;gap:8px;padding:6px 16px;background:var(--card);border:1px solid var(--border);border-radius:100px;font-size:.7rem;color:var(--t2);font-weight:600}
+.rcu-badge img{width:20px;height:20px;object-fit:contain;border-radius:4px}
+.scoring-hint{font-size:.72rem;color:var(--t3);text-align:center;margin-top:8px;line-height:1.5}
+
+/* SECTIONS */
+section{padding:80px 0;position:relative}
+.section-header{text-align:center;max-width:700px;margin:0 auto 48px}
+.section-tag{display:inline-block;padding:5px 14px;background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.15);border-radius:100px;font-size:.68rem;color:var(--gold2);font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px}
+.section-title{font-size:clamp(1.5rem,2.8vw,2.3rem);font-weight:800;letter-spacing:-.5px;line-height:1.2;margin-bottom:12px}
+.section-title .gold{color:var(--gold)}
+.section-desc{font-size:.88rem;color:var(--t2);line-height:1.6}
+.section-alt{background:var(--bg2)}
+
+/* DIVIDER */
+.divider{width:60px;height:3px;background:linear-gradient(90deg,var(--red),var(--gold));margin:12px auto 0;border-radius:2px}
+
+/* SCORING INFO */
+.scoring-box{max-width:720px;margin:0 auto 48px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 24px}
+.scoring-box h4{font-size:.8rem;color:var(--gold);margin-bottom:10px;font-weight:700}
+.scoring-box .rule-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.scoring-rule{text-align:center;padding:10px;background:rgba(0,0,0,.2);border-radius:8px;border:1px solid var(--border)}
+.scoring-rule .r-rank{font-size:.72rem;font-weight:700;margin-bottom:4px}
+.scoring-rule .r-pt{font-family:var(--mono);font-size:1.1rem;font-weight:900}
+.scoring-rule.r1 .r-rank{color:var(--gold)} .scoring-rule.r1 .r-pt{color:var(--gold)}
+.scoring-rule.r2 .r-rank{color:var(--silver)} .scoring-rule.r2 .r-pt{color:var(--silver)}
+.scoring-rule.r3 .r-rank{color:var(--bronze)} .scoring-rule.r3 .r-pt{color:var(--bronze)}
+.scoring-rule.r4 .r-rank{color:var(--red2)} .scoring-rule.r4 .r-pt{color:var(--red2)}
+.scoring-note{font-size:.7rem;color:var(--t3);margin-top:12px;text-align:center;line-height:1.6}
+
+/* PLAYER CARDS */
+.players-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.player-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 18px 22px;text-align:center;transition:var(--trans);position:relative;overflow:hidden;cursor:pointer}
+.player-card:hover{border-color:rgba(234,179,8,.2);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.player-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--red),var(--gold));transform:scaleX(0);transform-origin:left;transition:var(--trans)}
+.player-card:hover::before{transform:scaleX(1)}
+.player-photo{width:80px;height:80px;border-radius:50%;margin:0 auto 14px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.6rem;color:var(--gold);border:2px solid var(--border);transition:var(--trans);overflow:hidden;position:relative}
+.player-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.player-card:hover .player-photo{border-color:var(--gold);box-shadow:0 0 20px var(--gg)}
+.player-card h3{font-size:1.05rem;font-weight:800;margin-bottom:4px}
+.player-card .bio{font-size:.76rem;color:var(--t2);margin-bottom:14px;line-height:1.5;height:36px;overflow:hidden;font-style:italic}
+.player-card .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:14px;border-top:1px solid var(--border)}
+.player-card .stat-val{font-family:var(--mono);font-size:1rem;font-weight:800;color:var(--gold);line-height:1.1}
+.player-card .stat-val.negative{color:var(--red2)}
+.player-card .stat-lbl{font-size:.63rem;color:var(--t3);margin-top:3px}
+.player-card .rank-dist{display:flex;gap:4px;margin-top:12px;justify-content:center}
+.rank-chip{min-width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;font-family:var(--mono);padding:0 5px}
+.rank-chip.win{background:rgba(212,175,55,.15);color:var(--gold);border:1px solid rgba(212,175,55,.25)}
+.rank-chip.s2{background:rgba(192,192,192,.08);color:var(--silver);border:1px solid rgba(192,192,192,.15)}
+.rank-chip.s3{background:rgba(205,127,50,.08);color:var(--bronze);border:1px solid rgba(205,127,50,.15)}
+.rank-chip.s4{background:rgba(196,30,58,.08);color:var(--red2);border:1px solid rgba(196,30,58,.15)}
+
+/* MATCH TABLE */
+.match-table{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.match-thead{display:grid;grid-template-columns:80px 60px 50px 100px 90px 70px 80px;gap:12px;padding:14px 20px;background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);font-size:.7rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.match-row{display:grid;grid-template-columns:80px 60px 50px 100px 90px 70px 80px;gap:12px;padding:13px 20px;align-items:center;border-bottom:1px solid var(--border);font-size:.84rem;transition:var(--trans)}
+.match-row:last-child{border-bottom:none}
+.match-row:hover{background:var(--card-hover)}
+.match-row .m-date{color:var(--t2);font-size:.78rem}
+.match-row .m-round{font-weight:700}
+.match-row .m-half{color:var(--t3);font-size:.74rem}
+.match-row .m-player{font-weight:700;color:var(--gold)}
+.match-row .m-score{font-family:var(--mono);font-weight:700}
+.match-row .m-score.good{color:var(--green)}
+.match-row .m-score.ok{color:var(--gold)}
+.match-row .m-score.bad{color:var(--red2)}
+.match-row .m-pt{font-weight:700;font-family:var(--mono);font-size:.8rem}
+.m-pt.pos{color:var(--green)}
+.m-pt.neg{color:var(--red2)}
+.rank-badge-sm{padding:3px 8px;border-radius:6px;font-size:.68rem;font-weight:700;font-family:var(--mono)}
+.rank-badge-sm.r1{background:rgba(212,175,55,.15);color:var(--gold);border:1px solid rgba(212,175,55,.25)}
+.rank-badge-sm.r2{background:rgba(192,192,192,.08);color:var(--silver);border:1px solid rgba(192,192,192,.12)}
+.rank-badge-sm.r3{background:rgba(205,127,50,.08);color:var(--bronze);border:1px solid rgba(205,127,50,.12)}
+.rank-badge-sm.r4{background:rgba(196,30,58,.08);color:var(--red2);border:1px solid rgba(196,30,58,.12)}
+
+/* SCHEDULE */
+.schedule-grid{display:flex;flex-direction:column;gap:10px}
+.schedule-row{display:grid;grid-template-columns:90px 55px 1fr 100px 90px;gap:12px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;transition:var(--trans);font-size:.84rem}
+.schedule-row:hover{border-color:var(--border-h)}
+.schedule-row.today{border-left:3px solid var(--red);background:rgba(196,30,58,.06)}
+.schedule-row .s-date{color:var(--t2);font-size:.78rem}
+.schedule-row .s-round{font-weight:700;font-size:.82rem}
+.schedule-row .s-opponents{display:flex;gap:6px;flex-wrap:wrap}
+.schedule-row .op-chip{padding:3px 10px;border-radius:6px;font-size:.73rem;font-weight:600;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--t2)}
+.schedule-row .op-chip.us{color:var(--gold);border-color:rgba(234,179,8,.25);background:rgba(234,179,8,.06)}
+.schedule-row .s-status{text-align:center}
+.schedule-row .s-st{display:inline-block;padding:4px 12px;border-radius:100px;font-size:.68rem;font-weight:700}
+.schedule-row .s-st.live{background:var(--red);color:#fff;animation:pulse-live 2s infinite}
+.schedule-row .s-st.up{background:rgba(212,175,55,.1);color:var(--gold);border:1px solid rgba(212,175,55,.2)}
+.schedule-row .s-link{font-size:.72rem;color:var(--blue);text-align:right}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px 18px;text-align:center;transition:var(--trans)}
+.stat-card:hover{border-color:var(--border-h);transform:translateY(-2px)}
+.stat-card .icon{font-size:1.8rem;margin-bottom:10px}
+.stat-card .val{font-family:var(--mono);font-size:2rem;font-weight:900;color:var(--gold);line-height:1}
+.stat-card .val.small{font-size:1.5rem}
+.stat-card .lbl{font-size:.74rem;color:var(--t2);margin-top:6px}
+
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.about-text p{font-size:.9rem;color:var(--t2);line-height:1.8;margin-bottom:16px}
+.about-links{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.about-logo{width:100%;max-width:300px;border-radius:16px;margin:0 auto;display:block;box-shadow:0 16px 48px rgba(0,0,0,.4)}
+
+/* FOOTER */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 24px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:32px}
+.footer-brand p{color:var(--t2);font-size:.8rem;line-height:1.7;margin-top:12px;max-width:280px}
+.footer-col h5{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;color:var(--gold)}
+.footer-col ul{list-style:none}
+.footer-col ul li{margin-bottom:9px}
+.footer-col ul a{font-size:.8rem;color:var(--t2);transition:var(--trans)}
+.footer-col ul a:hover{color:var(--gold2)}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid var(--border);font-size:.7rem;color:var(--t3);flex-wrap:wrap;gap:8px}
+.footer-bottom a{color:var(--gold);transition:var(--trans)}
+.footer-bottom a:hover{color:var(--gold2)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* MOBILE LABEL - hidden on desktop */
+.m-label{display:none}
+
+/* RESPONSIVE */
+@media(max-width:960px){
+  .hero-grid{grid-template-columns:1fr;text-align:center}
+  .hero-content{max-width:100%}
+  .hero-meta{justify-content:center}
+  .hero-visual{display:none}
+  .hero p{max-width:100%;margin:0 auto 32px}
+  .hero-btns{justify-content:center}
+  .players-grid{grid-template-columns:repeat(2,1fr)}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .about-grid{grid-template-columns:1fr}
+  .about-logo{max-width:200px}
+  .scoring-box .rule-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:680px){
+  .nav-links{display:none;position:absolute;top:100%;left:0;width:100%;background:rgba(8,8,12,.98);flex-direction:column;padding:16px 20px;gap:14px;border-bottom:1px solid var(--border)}
+  .nav-links.open{display:flex}
+  .nav-toggle{display:flex}
+  .players-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .scoring-box .rule-grid{grid-template-columns:repeat(2,1fr)}
+  /* Match table: card layout with labels */
+  .match-thead{display:none}
+  .match-row{grid-template-columns:1fr;gap:5px;padding:14px 16px}
+  .match-row .m-label{display:inline-block;min-width:36px;color:var(--t3);font-size:.64rem;font-weight:700;margin-right:10px}
+  /* Schedule: card layout with labels */
+  .schedule-row{grid-template-columns:1fr;gap:5px;padding:14px 16px}
+  .schedule-row .m-label{display:inline-block;min-width:36px;color:var(--t3);font-size:.64rem;font-weight:700;margin-right:10px}
+  .schedule-row .s-link{text-align:left}
+  .footer-grid{grid-template-columns:1fr;gap:24px}
+  .footer-bottom{flex-direction:column;text-align:center}
+  .hero-meta{flex-wrap:wrap;gap:16px}
+  .about-grid{grid-template-columns:1fr;text-align:center}
+  .about-links{justify-content:center}
+  section{padding:60px 0}
+  .hero{padding:90px 0 40px;min-height:auto}
+}
+@media(max-width:420px){
+  .container{padding:0 14px}
+  section{padding:48px 0}
+  .hero{padding:80px 0 36px;min-height:auto}
+  .hero h1{font-size:1.55rem}
+  .hero p{font-size:.82rem}
+  .hero-meta{gap:10px}
+  .hero-meta-item .num{font-size:1.25rem}
+  .hero-meta-item .lbl{font-size:.6rem}
+  .hero-btns{gap:8px;flex-direction:column;align-items:stretch}
+  .btn-red,.btn-outline{padding:12px 20px;font-size:.8rem;justify-content:center}
+  .section-title{font-size:1.3rem}
+  .scoring-box{padding:16px 12px}
+  .scoring-rule{padding:8px 6px}
+  .scoring-rule .r-pt{font-size:.9rem}
+  .player-card{padding:22px 12px 16px}
+  .stat-card{padding:20px 12px}
+  .stat-card .val{font-size:1.4rem}
+  .stat-card .val.small{font-size:1.15rem}
+  .match-row{padding:12px 14px;gap:4px}
+  .schedule-row{padding:12px 14px;gap:4px}
+  .about-links{flex-direction:column;align-items:stretch}
+  .about-links .btn-outline{text-align:center}
+  .footer-grid{gap:20px}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="container nav-inner">
+    <a href="#" class="logo-wrap">
+      <img src="logo.jpg" alt="花生传媒">
+      <div class="logo-text">
+        <div class="en">Peanut Media</div>
+        <div class="cn">花生传媒</div>
+      </div>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home" class="active">首页</a></li>
+      <li><a href="#players">选手</a></li>
+      <li><a href="#results">赛果</a></li>
+      <li><a href="#schedule">赛程</a></li>
+      <li><a href="#stats">数据</a></li>
+    </ul>
+    <div class="nav-toggle" id="navToggle"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+
+<section class="hero" id="home">
+  <div class="hero-orbs"><div class="hero-orb a"></div><div class="hero-orb b"></div></div>
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-content">
+        <div class="hero-badge" id="heroBadge"><span class="dot"></span> RCU League 2026 · 加载赛程中...</div>
+        <h1><span class="gold">花生传媒</span><br>Peanut Media<br><span class="red">立直麻将战队</span></h1>
+        <p>四人战队 · RCU League 2026赛季参赛队伍。<br><strong>队伍简介：</strong>练就多菜，玩不起就别输。<br>比赛直播请关注 B站 RCU立直联盟。</p>
+        <div class="hero-meta">
+          <div class="hero-meta-item"><div class="num" id="heroTotalPT">+45.9</div><div class="lbl">联赛总PT</div></div>
+          <div class="hero-meta-item"><div class="num" id="heroHalfGames" style="font-size:1.6rem;font-family:var(--mono)">14</div><div class="lbl">已完成半庄</div></div>
+          <div class="hero-meta-item"><div class="num">4</div><div class="lbl">战队人数</div></div>
+          <div class="hero-meta-item"><div class="num" id="heroCompletedRounds">8</div><div class="lbl">已完成轮次</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;justify-content:flex-start;flex-wrap:wrap">
+          <span class="live-badge" style="font-size:.65rem;padding:3px 10px;background:rgba(46,139,87,.2);color:var(--green);border:1px solid rgba(46,139,87,.3);animation:none">
+            <span class="live-dot" style="background:var(--green)"></span> 实时数据
+          </span>
+          <span style="font-size:.65rem;color:var(--t3)" id="lastUpdated">加载中...</span>
+        </div>
+        <div class="hero-btns">
+          <a href="https://space.bilibili.com/3362132" target="_blank" class="btn-red">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> B站直播
+          </a>
+          <a href="#results" class="btn-outline">查看赛果</a>
+          <a href="#players" class="btn-outline">战队阵容</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <img src="logo.jpg" alt="花生传媒 Peanut Media" class="hero-logo">
+        <div class="rcu-badge">
+          <img src="rcu-logo-team04.png" alt="RCU"> RCU-LEAGUE 参赛战队 · Team 04
+        </div>
+        <div class="scoring-hint">PT积分：原点30000 · 每1000分=1pt<br>1位+50pt · 2位+10pt · 3位-10pt · 4位-30pt</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-alt" id="players">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Roster</span>
+      <h2 class="section-title">战队阵容 · <span class="gold">花生传媒</span></h2>
+      <p class="section-desc">RCU League 2026赛季四人固定阵容，点击卡片查看详细战绩</p>
+      <div class="divider"></div>
+    </div>
+    <div class="players-grid" id="playersGrid"></div>
+  </div>
+</section>
+
+<section id="results">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Match Results</span>
+      <h2 class="section-title">联赛<span class="gold">赛果</span></h2>
+      <p class="section-desc">RCU League 2026赛季花生传媒全部完赛对局</p>
+      <div class="divider"></div>
+    </div>
+
+    <div class="scoring-box reveal">
+      <h4>📐 PT积分计算规则</h4>
+      <div class="rule-grid">
+        <div class="scoring-rule r1"><div class="r-rank">🥇 1位</div><div class="r-pt">+50pt</div></div>
+        <div class="scoring-rule r2"><div class="r-rank">🥈 2位</div><div class="r-pt">+10pt</div></div>
+        <div class="scoring-rule r3"><div class="r-rank">🥉 3位</div><div class="r-pt">-10pt</div></div>
+        <div class="scoring-rule r4"><div class="r-rank">④ 4位</div><div class="r-pt">-30pt</div></div>
+      </div>
+      <div class="scoring-note">原点30000分起算 · 每±1000分=±1pt · 排名分+素点分=该局PT<br>例：62900分获第1位 → +32.9pt（素点）+ 50pt（排名）= +82.9pt</div>
+    </div>
+
+    <div class="match-table reveal">
+      <div class="match-thead">
+        <div>日期</div><div>轮次</div><div>半庄</div><div>选手</div><div>得点</div><div>排名</div><div>PT变动</div>
+      </div>
+      <div id="resultsBody"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section-alt" id="schedule">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Schedule</span>
+      <h2 class="section-title">剩余<span class="gold">赛程</span></h2>
+      <p class="section-desc">花生传媒在RCU League 2026赛季的后续比赛。今晚19:00 第17轮对阵技高一筹、热血兄弟、目标达成。</p>
+      <div class="divider"></div>
+    </div>
+    <div class="schedule-grid reveal" id="scheduleGrid"></div>
+  </div>
+</section>
+
+<section id="stats">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Statistics</span>
+      <h2 class="section-title">战队<span class="gold">数据面板</span></h2>
+      <p class="section-desc">RCU League 2026赛季花生传媒全队完赛数据汇总，实时追踪战队表现</p>
+      <div class="divider"></div>
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+  </div>
+</section>
+
+<section class="section-alt" id="about">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">About</span>
+      <h2 class="section-title">关于<span class="gold">花生传媒</span></h2>
+      <p class="section-desc">一支来自上海，因为热爱立直麻将而走到一起的四人战队</p>
+      <div class="divider"></div>
+    </div>
+    <div class="about-grid reveal">
+      <div class="about-text">
+        <p><strong>队伍简介：</strong>练就多菜，玩不起就别输。</p>
+        <p>花生传媒（Peanut Media）是 RCU League 立直麻将联赛的参赛战队，注册编号 Team 04。由花生（队长）、百岁山、有风南来、南风SW 四位立直麻将爱好者组成。</p>
+        <p>RCU League 是上海地区规模最大的立直麻将联赛，由 RCU 直播工作室运营，拥有数十名立直爱好者组成的长期联赛体系。花生传媒自 2026 赛季起正式参赛，以独特的团队风格在联赛中征战。</p>
+        <p>比赛实况直播请关注 B站：<strong>RCU立直联盟</strong>。</p>
+        <div class="about-links">
+          <a href="https://space.bilibili.com/3362132" target="_blank" class="btn-outline">📺 RCU立直联盟（直播）</a>
+          <a href="https://space.bilibili.com/1748199908" target="_blank" class="btn-outline">📺 花生传媒 B站主页</a>
+          <a href="http://rcu-league.com/" target="_blank" class="btn-outline">🌐 RCU League 官网</a>
+        </div>
+      </div>
+      <div>
+        <img src="logo.jpg" alt="花生传媒" class="about-logo">
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="logo-wrap">
+          <img src="logo.jpg" alt="花生传媒">
+          <div class="logo-text">
+            <div class="en">Peanut Media</div>
+            <div class="cn">花生传媒</div>
+          </div>
+        </a>
+        <p>RCU League 2026赛季参赛队伍 · Team 04。<br><strong>队伍简介：</strong>练就多菜，玩不起就别输。<br>比赛直播：B站 RCU立直联盟。</p>
+      </div>
+      <div class="footer-col">
+        <h5>导航</h5>
+        <ul>
+          <li><a href="#players">战队阵容</a></li>
+          <li><a href="#results">赛果记录</a></li>
+          <li><a href="#schedule">剩余赛程</a></li>
+          <li><a href="#stats">数据统计</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>外部链接</h5>
+        <ul>
+          <li><a href="https://space.bilibili.com/3362132" target="_blank">📺 RCU立直联盟（直播）</a></li>
+          <li><a href="https://space.bilibili.com/1748199908" target="_blank">花生传媒 B站主页</a></li>
+          <li><a href="http://rcu-league.com/" target="_blank">RCU League 官网</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 花生传媒 Peanut Media · RCU League Team 04 · All Rights Reserved</div>
+      <div>数据来源：<a href="http://rcu-league.com/" target="_blank">rcu-league.com</a></div>
+    </div>
+  </div>
+</footer>
+
+
+<script>var EMBEDDED_DATA = {"lastUpdated":"2026-07-22 11:00","teamTotalPt":45.9,"players":[{"id":"player04_01","name":"花生","bio":"如果没有重复，就一直天赋。","photo":"images/players/player04_01.jpg","games":4,"totalPt":136.2,"wins":2,"s2":1,"s3":1,"s4":0},{"id":"player04_02","name":"百岁山","bio":"想胡吗？我点给你。","photo":"images/players/player04_02.jpg","games":2,"totalPt":-77.2,"wins":0,"s2":0,"s3":1,"s4":1},{"id":"player04_03","name":"有风南来","bio":"立直就里3，不怕就来试。","photo":"images/players/player04_03.jpg","games":5,"totalPt":-64.3,"wins":1,"s2":1,"s3":1,"s4":2},{"id":"player04_04","name":"南风SW","bio":"自摸，全部交代。","photo":"images/players/player04_04.jpg","games":3,"totalPt":51.2,"wins":1,"s2":1,"s3":1,"s4":0}],"results":[{"date":"6/28","round":"第2轮","half":"H1","player":"花生","playerId":"player04_01","score":37000,"rank":1,"pt":57},{"date":"6/28","round":"第2轮","half":"H2","player":"百岁山","playerId":"player04_02","score":23900,"rank":3,"pt":-16.1},{"date":"6/29","round":"第4轮","half":"H1","player":"有风南来","playerId":"player04_03","score":33200,"rank":1,"pt":53.2},{"date":"6/29","round":"第4轮","half":"H2","player":"南风SW","playerId":"player04_04","score":42700,"rank":1,"pt":62.7},{"date":"7/5","round":"第6轮","half":"H1","player":"南风SW","playerId":"player04_04","score":19700,"rank":3,"pt":-20.3},{"date":"7/5","round":"第6轮","half":"H2","player":"花生","playerId":"player04_01","score":62900,"rank":1,"pt":82.9},{"date":"7/5","round":"第7轮","half":"H1","player":"百岁山","playerId":"player04_02","score":-1100,"rank":4,"pt":-61.1},{"date":"7/5","round":"第7轮","half":"H2","player":"花生","playerId":"player04_01","score":21900,"rank":3,"pt":-18.1},{"date":"7/8","round":"第9轮","half":"H1","player":"有风南来","playerId":"player04_03","score":27200,"rank":2,"pt":7.2},{"date":"7/8","round":"第9轮","half":"H2","player":"南风SW","playerId":"player04_04","score":28800,"rank":2,"pt":8.8},{"date":"7/12","round":"第10轮","half":"H1","player":"有风南来","playerId":"player04_03","score":19600,"rank":3,"pt":-20.4},{"date":"7/12","round":"第10轮","half":"H2","player":"有风南来","playerId":"player04_03","score":13800,"rank":4,"pt":-46.2},{"date":"7/19","round":"第14轮","half":"H1","player":"有风南来","playerId":"player04_03","score":-3500,"rank":4,"pt":-63.5},{"date":"7/19","round":"第14轮","half":"H2","player":"花生","playerId":"player04_01","score":28400,"rank":2,"pt":8.4}],"upcoming":[{"date":"7/22","time":"19:00","round":"第17轮","weekday":"周二","opponents":["技高一筹","热血兄弟","目标达成"],"today":true},{"date":"7/29","time":"19:00","round":"第21轮","weekday":"周二","opponents":["FOUR WINDS","热血兄弟","目标达成"],"today":false},{"date":"8/02","time":"19:00","round":"第23轮","weekday":"周六","opponents":["白夜Byakuya","六壬·N","抉择CHOICE"],"today":false},{"date":"8/09","time":"19:00","round":"第27轮","weekday":"周六","opponents":["开始游戏","抉择CHOICE","白夜Byakuya"],"today":false},{"date":"8/10","time":"19:00","round":"第28轮","weekday":"周日","opponents":["开始游戏","抉择CHOICE","目标达成"],"today":false}],"stats":{"totalGames":14,"totalWins":5,"completedRounds":8,"bestPlayer":{"name":"花生","totalPt":136.2}}};</script>
+<script src="app.js"></script>
+</body>
+</html>
