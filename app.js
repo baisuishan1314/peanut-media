@@ -229,13 +229,94 @@ function apply(){
   if(h&&appData.upcoming&&appData.upcoming.length){n=appData.upcoming[0];h.innerHTML='<span class="dot live"></span> RCU League 2026 · 下一场：'+n.date+(n.today?' 🔴今晚':'')+' '+n.time+' · '+n.round;}
   h=document.getElementById('lastUpdated');
   if(h)h.textContent=(dataSrc==='live'?'⏱ 实时 · RCU':(dataSrc==='rcu'?'⏱ RCU直连 · ':'📦 嵌入式缓存 · '))+(appData.lastUpdated||'');
+
+  // Re-bind player card clicks (event delegation)
+  var pg=document.getElementById('playersGrid');
+  if(pg)pg.onclick=function(e){
+    var card=e.target.closest('.player-card');if(!card)return;
+    var name=card.querySelector('h3');
+    if(name)openPlayerModal(name.textContent);
+  };
+}
+
+// === PLAYER MODAL ===
+function closePlayerModal(){
+  document.getElementById('playerModal').classList.remove('open');
+}
+function openPlayerModal(name){
+  if(!appData||!appData.players||!appData.results)return;
+  var p;
+  for(var i=0;i<appData.players.length;i++){
+    if(appData.players[i].name===name){p=appData.players[i];break;}
+  }
+  if(!p)return;
+
+  var matches=[];
+  for(var i=0;i<appData.results.length;i++){
+    if(appData.results[i].player===p.name||appData.results[i].playerId===p.id){
+      matches.push(appData.results[i]);
+    }
+  }
+  matches.sort(function(a,b){return parseInt(a.round.replace(/[^0-9]/g,''))-parseInt(b.round.replace(/[^0-9]/g,''));});
+
+  var avgPt=matches.length>0?Math.round(p.totalPt/matches.length*10)/10:0;
+  var winRate=matches.length>0?Math.round(p.wins/matches.length*100):0;
+
+  // Build rank bar
+  var total=p.wins+p.s2+p.s3+p.s4||1;
+  var rbar='';
+  if(p.wins>0)rbar+='<div class="pm-rk-gold" style="flex:'+(p.wins/total*100)+'%">🥇'+p.wins+'</div>';
+  if(p.s2>0)rbar+='<div class="pm-rk-silver" style="flex:'+(p.s2/total*100)+'%">🥈'+p.s2+'</div>';
+  if(p.s3>0)rbar+='<div class="pm-rk-bronze" style="flex:'+(p.s3/total*100)+'%">🥉'+p.s3+'</div>';
+  if(p.s4>0)rbar+='<div class="pm-rk-iron" style="flex:'+(p.s4/total*100)+'%">④'+p.s4+'</div>';
+
+  // Render header
+  var init=p.name?p.name.charAt(0):'?';
+  var img=p.photo?'<img src="'+p.photo+'" alt="'+p.name+'" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.textContent=\''+init+'\'">':init;
+  document.getElementById('pmHeader').innerHTML=
+    '<div class="pm-photo">'+img+'</div>'+
+    '<div class="pm-name">'+p.name+'</div>'+
+    '<div class="pm-bio">"'+p.bio+'"</div>'+
+    '<div class="pm-summary">'+
+      '<div class="pm-sum-item"><div class="v">'+p.games+'</div><div class="l">出场半庄</div></div>'+
+      '<div class="pm-sum-item"><div class="v '+(p.totalPt<0?'neg':'')+'">'+(p.totalPt>0?'+':'')+p.totalPt+'</div><div class="l">累计PT</div></div>'+
+      '<div class="pm-sum-item"><div class="v">'+(avgPt>0?'+':'')+avgPt+'</div><div class="l">场均PT</div></div>'+
+      '<div class="pm-sum-item"><div class="v">'+winRate+'%</div><div class="l">1位率</div></div>'+
+    '</div>'+
+    '<div class="pm-rank-bar" style="margin-top:16px">'+rbar+'</div>';
+
+  // Render match list
+  var mhtml=matches.length?'':'<div class="pm-empty">暂无比赛记录</div>';
+  for(var i=0;i<matches.length;i++){
+    var m=matches[i],scCss=m.rank===1?'good':m.rank===2?'ok':m.rank===4?'bad':'';
+    mhtml+='<div class="pm-match-row">'+
+      '<div class="r-date">'+m.date+'</div>'+
+      '<div class="r-round">'+m.round+'</div>'+
+      '<div class="r-score '+scCss+'">'+(m.score>=0?'+':'')+m.score.toLocaleString()+'</div>'+
+      '<div class="r-pt '+ptC(m.pt)+'">'+ptS(m.pt)+m.pt+'</div>'+
+      '<div class="r-rank"><span class="rank-badge-sm r'+m.rank+'">'+m.rank+'位</span></div>'+
+    '</div>';
+  }
+  document.getElementById('pmBody').innerHTML='<h4>个人比赛记录</h4><div class="pm-match-list">'+mhtml+'</div>';
+
+  document.getElementById('playerModal').classList.add('open');
+  document.getElementById('playerModal').onclick=function(e){if(e.target===this)closePlayerModal();};
+  document.onkeydown=function(e){if(e.key==='Escape')closePlayerModal();};
 }
 
 // === LIVE FETCH ===
 async function tryRCU(){
   try{
     var d=await rcuCompute();
-    if(d){appData=d;dataSrc='rcu';apply();return true;}
+    if(d){
+      // Preserve local photo paths from embedded data (RCU photos are HTTP, blocked on HTTPS)
+      var embPhotos={};
+      if(EMBEDDED_DATA&&EMBEDDED_DATA.players){
+        EMBEDDED_DATA.players.forEach(function(p){embPhotos[p.id]=p.photo;});
+      }
+      d.players.forEach(function(p){if(embPhotos[p.id])p.photo=embPhotos[p.id];});
+      appData=d;dataSrc='rcu';apply();return true;
+    }
   }catch(e){console.log('[RCU] tryRCU failed:',e.message);}
   return false;
 }
