@@ -399,43 +399,48 @@ const Render = {
     const fourthPlace = standings[3] || null;
     const ourRank = standings.findIndex(s => s.is_ours) + 1;
 
-    // Scale: use dynamic range based on 1st and last place
-    const allPts = standings.map(s => s.totalPt);
-    const minPt = allPts.length ? Math.min(...allPts, -300) : -300;
-    const maxPt = allPts.length ? Math.max(...allPts, 300) : 300;
+    // Scale: 0 to 1st place + 15% headroom — focuses on the relevant range
+    const maxPt = firstPlace ? firstPlace.totalPt * 1.15 : 300;
+    const minPt = 0;
     const range = maxPt - minPt;
 
-    // Position helper: convert PT to % position on bar (0% = leftmost, 100% = rightmost)
-    const ptToPct = (val) => ((val - minPt) / range * 100).toFixed(1);
+    // Position helper
+    const ptToPct = (val) => Math.max(0, Math.min(100, ((val - minPt) / range * 100))).toFixed(1);
 
-    // Our team's fill: from minPt to our PT
     const ourPct = ptToPct(pt);
-    const zeroPct = ptToPct(0);
     const firstPct = firstPlace ? ptToPct(firstPlace.totalPt) : null;
     const fourthPct = fourthPlace ? ptToPct(fourthPlace.totalPt) : null;
 
-    // Build comparison markers
+    // Target zone: shade between 4th place and 1st place
+    let targetZone = '';
+    if (firstPct && fourthPct) {
+      const left = Math.min(firstPct, fourthPct);
+      const width = Math.abs(firstPct - fourthPct);
+      targetZone = `<div class="pt-bar-target-zone" style="left:${left}%;width:${width}%"></div>`;
+    }
+
+    // Markers with staggered labels (above/below) to prevent overlap
     let markers = '';
     if (firstPct) {
-      markers += `<div class="pt-bar-marker first" style="left:${firstPct}%">
+      markers += `<div class="pt-bar-marker first above" style="left:${firstPct}%">
         <div class="pt-bar-marker-line"></div>
-        <div class="pt-bar-marker-label">第1名 ${firstPlace.team} ${Utils.ptSign(firstPlace.totalPt)}${firstPlace.totalPt}</div>
+        <div class="pt-bar-marker-label">#1 ${firstPlace.team}<br><span class="pt-bar-pt">${Utils.ptSign(firstPlace.totalPt)}${firstPlace.totalPt}</span></div>
       </div>`;
     }
     if (fourthPct) {
-      markers += `<div class="pt-bar-marker fourth" style="left:${fourthPct}%">
+      markers += `<div class="pt-bar-marker fourth above" style="left:${fourthPct}%">
         <div class="pt-bar-marker-line"></div>
-        <div class="pt-bar-marker-label">前4线 ${fourthPlace.team} ${Utils.ptSign(fourthPlace.totalPt)}${fourthPlace.totalPt}</div>
+        <div class="pt-bar-marker-label">#4 ${fourthPlace.team}<br><span class="pt-bar-pt">${Utils.ptSign(fourthPlace.totalPt)}${fourthPlace.totalPt}</span></div>
       </div>`;
     }
 
-    // Our team marker
-    markers += `<div class="pt-bar-marker ours" style="left:${ourPct}%">
+    // Our team marker — label BELOW bar to avoid overlap with 4th place
+    markers += `<div class="pt-bar-marker ours below" style="left:${ourPct}%">
       <div class="pt-bar-marker-dot"></div>
-      <div class="pt-bar-marker-label ours-label">花生传媒 第${ourRank}名 ${Utils.ptSign(pt)}${pt.toFixed(1)}</div>
+      <div class="pt-bar-marker-label">#${ourRank} 花生传媒<br><span class="pt-bar-pt">${Utils.ptSign(pt)}${pt.toFixed(1)}</span></div>
     </div>`;
 
-    // Fill bar from left to our position
+    // Fill bar from 0 to our position
     const fillWidth = ourPct;
 
     section.innerHTML = `
@@ -445,17 +450,16 @@ const Render = {
       </div>
       <div class="pt-bar-track-wide">
         <div class="pt-bar-fill-wide ${ptCls}" style="width:${fillWidth}%"></div>
-        <div class="pt-bar-zero-wide" style="left:${zeroPct}%"></div>
+        ${targetZone}
         ${markers}
       </div>
       <div class="pt-bar-labels-wide">
-        <span>${minPt}</span>
-        <span style="position:absolute;left:${zeroPct}%;transform:translateX(-50%);color:var(--t3)">0</span>
-        <span style="float:right">${maxPt}+</span>
+        <span>0</span>
+        <span>${maxPt.toFixed(0)}</span>
       </div>
       <div class="pt-bar-legend">
-        <div class="pt-bar-leg-item"><span class="pt-leg-dot first"></span>第1名线</div>
-        <div class="pt-bar-leg-item"><span class="pt-leg-dot fourth"></span>前4名线</div>
+        <div class="pt-bar-leg-item"><span class="pt-leg-dot first"></span>第1名 ${firstPlace ? firstPlace.team : ''}</div>
+        <div class="pt-bar-leg-item"><span class="pt-leg-dot fourth"></span>前4名 ${fourthPlace ? fourthPlace.team : ''}</div>
         <div class="pt-bar-leg-item"><span class="pt-leg-dot ours"></span>花生传媒 (第${ourRank}名)</div>
       </div>`;
   },
