@@ -50,17 +50,32 @@ def compute_rcu_data():
                     'photo': p.get('photo', '')
                 }
 
+    # All players info (for match details)
+    all_players_info = {}
+    for team in players.get('teams', []):
+        for p in team.get('players', []):
+            all_players_info[p['player_id']] = {
+                'name': p.get('name', ''),
+                'team_id': team.get('team_id')
+            }
+
     ps = {}
     for pid in t4_players:
         ps[pid] = {'games': 0, 'totalPt': 0, 'wins': 0, 's2': 0, 's3': 0, 's4': 0}
 
     all_results = []
     team_total_pt = 0
+    match_details = []
+    team_pt_map = {}
 
     completed = [r for r in results.get('results', [])
                  if r.get('first_half', {}).get('east', {}).get('score') is not None]
 
     for r in completed:
+        round_num = re.sub(r'\D', '', str(r.get('round', '')))
+        round_str = f"\u7b2c{round_num}\u8f6e" if round_num else f"\u7b2c{r['round']}\u8f6e"
+        date = r.get('date', '')
+
         for hk in ['first_half', 'second_half']:
             half = r.get(hk)
             if not half:
@@ -76,10 +91,33 @@ def compute_rcu_data():
                     })
             entries.sort(key=lambda x: x['score'], reverse=True)
 
+            half_label = 'H1' if hk == 'first_half' else 'H2'
+            half_players = []
+
             for rank, e in enumerate(entries):
-                if e['team_id'] == 4:
-                    pid = e['player_id']
-                    pt = calc_pt(e['score'], rank)
+                tid = e['team_id']
+                pid = e['player_id']
+                pt = calc_pt(e['score'], rank)
+
+                # Track all teams' PT
+                if tid not in team_pt_map:
+                    team_pt_map[tid] = 0
+                team_pt_map[tid] += pt
+
+                # Build match detail entry for all players
+                pinfo = all_players_info.get(pid, {})
+                half_players.append({
+                    'team': team_names.get(tid, f'Team {tid}'),
+                    'team_id': tid,
+                    'player': pinfo.get('name', f'Player {pid}'),
+                    'score': e['score'],
+                    'rank': rank + 1,
+                    'pt': pt,
+                    'is_ours': tid == 4
+                })
+
+                # Track our team's player stats
+                if tid == 4:
                     team_total_pt += pt
                     if pid and pid in ps:
                         ps[pid]['games'] += 1
@@ -93,15 +131,34 @@ def compute_rcu_data():
                         else:
                             ps[pid]['s4'] += 1
                     pn = t4_players.get(pid, {}).get('name', f'Player {pid}')
-                    round_num = re.sub(r'\D', '', str(r.get('round', '')))
                     all_results.append({
-                        'date': r.get('date', ''),
-                        'round': f"\u7b2c{round_num}\u8f6e" if round_num else f"\u7b2c{r['round']}\u8f6e",
-                        'half': 'H1' if hk == 'first_half' else 'H2',
+                        'date': date,
+                        'round': round_str,
+                        'half': half_label,
                         'player': pn, 'playerId': pid,
                         'score': e['score'], 'rank': rank + 1, 'pt': pt
                     })
-                    break
+
+            match_details.append({
+                'date': date,
+                'round': round_str,
+                'half': half_label,
+                'players': half_players
+            })
+
+    # Sort match details by round then half
+    match_details.sort(key=lambda x: (int(re.sub(r'\D', '', x['round'])), x['half']))
+
+    # Build league standings
+    league_standings = []
+    for tid, pt in team_pt_map.items():
+        league_standings.append({
+            'team_id': tid,
+            'team': team_names.get(tid, f'Team {tid}'),
+            'totalPt': round(pt * 10) / 10,
+            'is_ours': tid == 4
+        })
+    league_standings.sort(key=lambda x: x['totalPt'], reverse=True)
 
     all_results.sort(key=lambda x: (int(re.sub(r'\D', '', x['round'])), x['half']))
 
@@ -169,6 +226,8 @@ def compute_rcu_data():
         'lastUpdated': time.strftime('%Y-%m-%d %H:%M', time.localtime()),
         'teamTotalPt': round(team_total_pt * 10) / 10,
         'players': plist, 'results': all_results, 'upcoming': upcoming,
+        'matchDetails': match_details,
+        'leagueStandings': league_standings,
         'stats': {
             'totalGames': total_games, 'totalWins': total_wins,
             'completedRounds': len(completed),
