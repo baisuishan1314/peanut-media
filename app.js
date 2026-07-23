@@ -1,9 +1,9 @@
 // ====== RCU LIVE DATA ENGINE ======
 // 1. Render embedded data instantly (zero network)
 // 2. Fetch live from RCU in background
-// 3. Auto-refresh every 30s
+// 3. Auto-refresh every 30min
 
-var RCU='http://rcu-league.com',REFRESH=30000,appData,dataSrc='embedded',timer;
+var RCU='http://rcu-league.com',REFRESH=1800000,appData,dataSrc='embedded',timer;
 var RP=30000,RK=[50,10,-10,-30];
 
 // PT calculation (RCU official formula)
@@ -16,13 +16,20 @@ var ptC=function(v){return v>0?'pos':v<0?'neg':'';};
 var ptS=function(v){return v>0?'+':'';};
 var scC=function(r){return r===1?'good':r===2?'ok':r===4?'bad':'';};
 
-// Fetch JSON with CORS fallback (RCU has no CORS headers, use proxy)
+// Fetch JSON via CORS proxy (RCU has no CORS headers + is HTTP only)
 async function rcuFetch(path){
   var url=RCU+path;
-  // Try direct (may work if RCU adds CORS headers in future)
-  try{var r=await fetch(url);if(r.ok)return r.json();}catch(e){}
-  // CORS proxy (rcu-league.com has no CORS headers)
-  try{var r=await fetch('https://proxy.cors.sh/'+encodeURIComponent(url),{headers:{'x-requested-with':'XMLHttpRequest'}});if(r.ok)return r.json();}catch(e){}
+  // Skip direct fetch on HTTPS pages (mixed content blocked by browser)
+  var isHTTPS=location.protocol==='https:';
+  if(!isHTTPS){
+    try{var r=await fetch(url);if(r.ok)return r.json();}catch(e){}
+  }
+  // Primary CORS proxy — URL must NOT be encoded
+  try{var r=await fetch('https://proxy.cors.sh/'+url,{headers:{'x-requested-with':'XMLHttpRequest'}});if(r.ok)return r.json();}catch(e){}
+  // Backup proxy 1
+  try{var r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(url));if(r.ok)return r.json();}catch(e){}
+  // Backup proxy 2
+  try{var r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url));if(r.ok)return r.json();}catch(e){}
   throw Error('Failed to fetch '+path);
 }
 
@@ -236,9 +243,10 @@ async function tryRCU(){
 // === INIT ===
 // Step 1: Render embedded data instantly
 appData=EMBEDDED_DATA;dataSrc='embedded';apply();
-// Step 2: Try RCU live fetch + start auto-refresh on success
-tryRCU().then(function(ok){
-  if(ok){timer=setInterval(tryRCU,REFRESH);console.log('[RCU] Live mode active, refresh every '+REFRESH/1000+'s');}
+// Step 2: Try RCU live fetch, then start auto-refresh (always, even if first fetch fails)
+tryRCU().then(function(){
+  timer=setInterval(tryRCU,REFRESH);
+  console.log('[RCU] Auto-refresh active every '+REFRESH/1000+'s ('+REFRESH/60000+'min)');
 });
 
 // Navbar, menu, scroll, reveal...
