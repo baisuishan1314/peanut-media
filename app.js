@@ -17,7 +17,8 @@ const state = {
   data: null,
   source: 'fallback',  // 'fallback' | 'data-json'
   refreshTimer: null,
-  isLoading: false
+  isLoading: false,
+  filter: { player: 'all', rank: 'all' }  // result filter state
 };
 
 // ===== UTILS =====
@@ -40,6 +41,34 @@ const Utils = {
     return now.getFullYear() + '-' +
       String(now.getMonth() + 1).padStart(2, '0') + '-' +
       String(now.getDate()).padStart(2, '0');
+  }
+};
+
+// ===== CHARTS (pure SVG, no dependencies) =====
+const Charts = {
+  /** Donut chart showing rank distribution (1st/2nd/3rd/4th) */
+  donut(wins, s2, s3, s4, size = 56) {
+    const total = wins + s2 + s3 + s4;
+    if (total === 0) return '<div class="donut-empty">暂无数据</div>';
+    const colors = ['#D4AF37', '#c0c0c0', '#cd7f32', '#C41E3A'];
+    const labels = ['1位', '2位', '3位', '4位'];
+    const values = [wins, s2, s3, s4];
+    const r = (size - 8) / 2;
+    const cx = size / 2, cy = size / 2;
+    const circumference = 2 * Math.PI * r;
+    let offset = 0;
+    let segments = '';
+    let legend = '';
+    values.forEach((v, i) => {
+      if (v > 0) {
+        const len = (v / total) * circumference;
+        segments += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[i]}" stroke-width="5" stroke-dasharray="${len.toFixed(1)} ${(circumference - len).toFixed(1)}" stroke-dashoffset="${(-offset).toFixed(1)}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>`;
+        offset += len;
+      }
+      const pct = total > 0 ? Math.round(v / total * 100) : 0;
+      legend += `<div class="donut-leg-item"><span class="donut-leg-dot" style="background:${colors[i]}"></span>${labels[i]} ${v} (${pct}%)</div>`;
+    });
+    return `<div class="donut-wrap"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="donut-chart">${segments}<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="${Math.round(size * 0.24)}" font-weight="800" fill="#eaecf0">${total}</text></svg><div class="donut-legend">${legend}</div></div>`;
   }
 };
 
@@ -104,14 +133,28 @@ const Data = {
 const Render = {
   all() {
     if (!state.data) return;
+    this.filterBar();
     this.players();
     this.results();
     this.schedule();
+    this.matchDayBanner();
     this.stats();
+    this.ptBar();
     this.hero();
     this.dataSource();
     // Re-observe new reveal elements
     Events.bindReveal();
+  },
+
+  filterBar() {
+    const container = $('filterPlayer');
+    if (!container || !state.data.players) return;
+    // Build player filter buttons (keep "all" + add each player)
+    let html = '<button class="filter-btn active" data-player="all">全部</button>';
+    state.data.players.forEach(p => {
+      html += `<button class="filter-btn" data-player="${Utils.escapeHtml(p.name)}">${Utils.escapeHtml(p.name)}</button>`;
+    });
+    container.innerHTML = html;
   },
 
   players() {
@@ -123,12 +166,8 @@ const Render = {
       const photo = p.photo
         ? `<img src="${Utils.escapeHtml(p.photo)}" alt="${Utils.escapeHtml(p.name)}" loading="lazy" onerror="this.classList.add('img-broken')">`
         : '';
-      const chips = [
-        ...Array(p.wins || 0).fill('<div class="rank-chip win">1</div>'),
-        ...Array(p.s2 || 0).fill('<div class="rank-chip s2">2</div>'),
-        ...Array(p.s3 || 0).fill('<div class="rank-chip s3">3</div>'),
-        ...Array(p.s4 || 0).fill('<div class="rank-chip s4">4</div>')
-      ].join('');
+      // Donut chart for rank distribution
+      const donut = Charts.donut(p.wins || 0, p.s2 || 0, p.s3 || 0, p.s4 || 0, 56);
       return `<div class="player-card reveal" data-player="${Utils.escapeHtml(p.name)}">
         <div class="player-photo" data-initial="${Utils.escapeHtml(init)}">${photo}</div>
         <h3>${Utils.escapeHtml(p.name)}</h3>
@@ -138,7 +177,7 @@ const Render = {
           <div><div class="stat-val ${ptCls}">${Utils.ptSign(p.totalPt)}${p.totalPt}</div><div class="stat-lbl">总PT</div></div>
           <div><div class="stat-val">${p.wins}</div><div class="stat-lbl">1位</div></div>
         </div>
-        <div class="rank-dist">${chips}</div>
+        ${donut}
       </div>`;
     }).join('');
   },
@@ -146,7 +185,29 @@ const Render = {
   results() {
     const body = $('resultsBody');
     if (!body || !state.data.results) return;
-    body.innerHTML = state.data.results.map(r => {
+
+    // Apply filters
+    let results = state.data.results;
+    if (state.filter.player !== 'all') {
+      results = results.filter(r => r.player === state.filter.player);
+    }
+    if (state.filter.rank !== 'all') {
+      results = results.filter(r => r.rank === parseInt(state.filter.rank));
+    }
+
+    // Update count
+    const countEl = $('filterCount');
+    if (countEl) {
+      const total = state.data.results.length;
+      countEl.innerHTML = `显示 <strong>${results.length}</strong> / ${total} 场`;
+    }
+
+    if (results.length === 0) {
+      body.innerHTML = '<div class="filter-empty">没有符合条件的比赛记录</div>';
+      return;
+    }
+
+    body.innerHTML = results.map(r => {
       const scoreCls = Utils.scoreClass(r.rank);
       const ptCls = Utils.ptClass(r.pt);
       return `<div class="match-row reveal">
@@ -180,12 +241,13 @@ const Render = {
       const seen = {}, opps = [];
       (s.opponents || []).forEach(o => { if (!seen[o]) { seen[o] = 1; opps.push(o); } });
       const oppChips = opps.map(t => `<span class="op-chip">${Utils.escapeHtml(t)}</span>`).join('');
-      const status = s.today ? 'live' : 'up';
-      const statusText = s.today ? 'TODAY' : '即将开赛';
-      const link = s.today
+      const isToday = s.today;
+      const status = isToday ? 'live' : 'up';
+      const statusText = isToday ? 'TODAY' : '即将开赛';
+      const link = isToday
         ? `<a href="https://space.bilibili.com/3362132" target="_blank" rel="noopener" style="color:var(--blue)">看直播 →</a>`
         : `<span style="color:var(--t3)">${Utils.escapeHtml(s.weekday || '')}</span>`;
-      return `<div class="schedule-row reveal${s.today ? ' today' : ''}">
+      return `<div class="schedule-row reveal${isToday ? ' today' : ''}">
         <div class="s-date"><span class="m-label">日期</span>${Utils.escapeHtml(s.date)} · ${Utils.escapeHtml(s.time)}</div>
         <div class="s-round"><span class="m-label">轮次</span>${Utils.escapeHtml(s.round)}</div>
         <div class="s-opponents"><span class="m-label">对阵</span><span class="op-chip us">★ 花生传媒</span>${oppChips}</div>
@@ -193,6 +255,80 @@ const Render = {
         <div class="s-link">${link}</div>
       </div>`;
     }).join('');
+  },
+
+  matchDayBanner() {
+    const banner = $('matchDayBanner');
+    if (!banner || !state.data._filteredUpcoming) return;
+
+    // Find today's match or next upcoming match
+    const upcoming = state.data._filteredUpcoming;
+    const todayMatch = upcoming.find(s => s.today);
+
+    if (todayMatch) {
+      banner.classList.add('show');
+      const seen = {}, opps = [];
+      (todayMatch.opponents || []).forEach(o => { if (!seen[o]) { seen[o] = 1; opps.push(o); } });
+      $('mdTitle').textContent = '🔥 今日有比赛！';
+      $('mdSub').textContent = `${todayMatch.round} · ${todayMatch.time} · 对阵 ${opps.join('、')}`;
+
+      // Countdown to match time
+      this._startCountdown(todayMatch);
+    } else if (upcoming.length > 0) {
+      // Show next match countdown
+      const next = upcoming[0];
+      banner.classList.add('show');
+      const seen = {}, opps = [];
+      (next.opponents || []).forEach(o => { if (!seen[o]) { seen[o] = 1; opps.push(o); } });
+      $('mdTitle').textContent = '⏰ 下一场比赛';
+      $('mdSub').textContent = `${next.date} · ${next.time} · ${next.round} · 对阵 ${opps.join('、')}`;
+      this._startCountdown(next);
+    } else {
+      banner.classList.remove('show');
+    }
+  },
+
+  _countdownTimer: null,
+  _startCountdown(match) {
+    if (this._countdownTimer) clearInterval(this._countdownTimer);
+    const cdEl = $('mdCountdown');
+    const cdLabel = $('mdCdLabel');
+
+    const update = () => {
+      // Parse match date + time
+      const dateStr = match.date || '';
+      const timeStr = match.time || '19:00';
+      // Try to extract YYYY-MM-DD from date string
+      const m = dateStr.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+      if (!m) {
+        if (cdEl) cdEl.textContent = match.time || '';
+        return;
+      }
+      const target = new Date(`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}T${timeStr}:00`);
+      const now = new Date();
+      const diff = target - now;
+
+      if (diff <= 0) {
+        if (cdEl) cdEl.textContent = '进行中';
+        if (cdLabel) cdLabel.textContent = match.today ? 'LIVE' : '状态';
+        return;
+      }
+
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+
+      if (cdLabel) cdLabel.textContent = match.today ? '距开赛' : '倒计时';
+      if (days > 0) {
+        if (cdEl) cdEl.textContent = `${days}天 ${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}`;
+      } else {
+        if (cdEl) cdEl.textContent = `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      }
+    };
+
+    update();
+    this._countdownTimer = setInterval(update, 1000);
   },
 
   stats() {
@@ -205,6 +341,33 @@ const Render = {
       <div class="stat-card reveal"><div class="icon">🏆</div><div class="val">${s.totalWins || 0}</div><div class="lbl">1位次数</div></div>
       <div class="stat-card reveal"><div class="icon">📈</div><div class="val small">${Utils.ptSign(state.data.teamTotalPt)}${(state.data.teamTotalPt || 0).toFixed(1)}</div><div class="lbl">队伍总PT</div></div>
       <div class="stat-card reveal"><div class="icon">⭐</div><div class="val small">${Utils.escapeHtml(p.name || '--')}</div><div class="lbl">PT王 (${Utils.ptSign(p.totalPt)}${p.totalPt || 0})</div></div>`;
+  },
+
+  ptBar() {
+    const section = $('ptBarSection');
+    if (!section) return;
+    const pt = state.data.teamTotalPt || 0;
+    const ptCls = pt >= 0 ? 'pos' : 'neg';
+
+    // Scale: use ±300 as visual range, cap at edges
+    const maxRange = 300;
+    const absPt = Math.min(Math.abs(pt), maxRange);
+    const fillPct = (absPt / maxRange) * 50; // 50% of bar (half is for each side)
+
+    section.innerHTML = `
+      <div class="pt-bar-header">
+        <div class="pt-bar-title">📊 队伍联赛PT进度</div>
+        <div class="pt-bar-value ${ptCls}">${Utils.ptSign(pt)}${pt.toFixed(1)}</div>
+      </div>
+      <div class="pt-bar-track">
+        <div class="pt-bar-zero"></div>
+        <div class="pt-bar-fill ${ptCls}" style="width:${fillPct}%"></div>
+      </div>
+      <div class="pt-bar-labels">
+        <span>-300</span>
+        <span style="color:var(--t3)">0</span>
+        <span>+300</span>
+      </div>`;
   },
 
   hero() {
@@ -292,6 +455,7 @@ const Modal = {
         <div class="pm-sum-item"><div class="v">${winRate}%</div><div class="l">1位率</div></div>
       </div>
       <div class="pm-rank-bar" style="margin-top:16px">${rbar}</div>
+      ${Charts.donut(p.wins || 0, p.s2 || 0, p.s3 || 0, p.s4 || 0, 80)}
     `);
 
     // Match list
@@ -343,6 +507,7 @@ const Events = {
     this.modal();
     this.retry();
     this.scroll();
+    this.filter();
     this.bindReveal();
   },
 
@@ -423,6 +588,34 @@ const Events = {
 
   scroll() {
     // Already handled in nav()
+  },
+
+  filter() {
+    // Player filter (event delegation)
+    const playerFilter = $('filterPlayer');
+    if (playerFilter) {
+      playerFilter.addEventListener('click', e => {
+        const btn = e.target.closest('.filter-btn');
+        if (!btn) return;
+        playerFilter.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.filter.player = btn.getAttribute('data-player');
+        Render.results();
+      });
+    }
+
+    // Rank filter (event delegation)
+    const rankFilter = $('filterRank');
+    if (rankFilter) {
+      rankFilter.addEventListener('click', e => {
+        const btn = e.target.closest('.filter-btn');
+        if (!btn) return;
+        rankFilter.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.filter.rank = btn.getAttribute('data-rank');
+        Render.results();
+      });
+    }
   },
 
   bindReveal() {
