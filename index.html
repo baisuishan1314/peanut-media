@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="20260723144707">
+<meta name="app-version" content="20260723145634">
 <title>花生传媒 Peanut Media | RCU League 立直麻将战队</title>
 <meta name="description" content="花生传媒 Peanut Media 立直麻将战队 - RCU League 2026赛季参赛队伍。四人战队：花生、百岁山、有风南来、南风SW。比赛直播：B站 RCU立直联盟">
 <link rel="icon" href="logo.jpg" type="image/jpeg">
@@ -394,6 +394,31 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
 /* MOBILE LABEL - hidden on desktop */
 .m-label{display:none}
 
+/* HEAD TO HEAD */
+.h2h-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.h2h-sum-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 12px;text-align:center;transition:var(--trans)}
+.h2h-sum-card:hover{border-color:var(--border-h)}
+.h2h-sum-card .v{font-family:var(--mono);font-size:1.5rem;font-weight:900;color:var(--gold);line-height:1}
+.h2h-sum-card .v .vs{font-size:.7rem;color:var(--t3);margin:0 4px;font-weight:600}
+.h2h-sum-card .l{font-size:.7rem;color:var(--t2);margin-top:5px}
+.h2h-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.h2h-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:var(--trans);contain:layout style}
+.h2h-card:hover{border-color:var(--border-h);transform:translateY(-2px)}
+.h2h-team{font-size:1rem;font-weight:800;margin-bottom:16px;color:var(--gold);display:flex;align-items:center;gap:8px}
+.h2h-team::before{content:'\2694';font-size:.85rem;opacity:.5}
+.h2h-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.h2h-stat{text-align:center}
+.h2h-stat .v{font-family:var(--mono);font-size:1.05rem;font-weight:800;color:var(--t1);line-height:1}
+.h2h-stat .v.pos{color:var(--green)}
+.h2h-stat .v.neg{color:var(--red2)}
+.h2h-stat .l{font-size:.6rem;color:var(--t3);margin-top:4px}
+.h2h-record{display:flex;align-items:center;gap:10px}
+.h2h-bar{flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--bg2)}
+.h2h-bar-win{background:var(--green);transition:width .6s ease}
+.h2h-bar-loss{background:var(--red);transition:width .6s ease}
+.h2h-winrate{font-size:.72rem;font-weight:700;color:var(--t2);white-space:nowrap}
+.h2h-empty{text-align:center;padding:40px;color:var(--t3);font-size:.85rem}
+
 /* RESPONSIVE */
 @media(max-width:960px){
   .hero-grid{grid-template-columns:1fr;text-align:center}
@@ -407,6 +432,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
   .about-grid{grid-template-columns:1fr}
   .about-logo{max-width:200px}
   .scoring-box .rule-grid{grid-template-columns:repeat(4,1fr)}
+  .h2h-grid{grid-template-columns:1fr}
 }
 @media(max-width:680px){
   .nav-links{display:none;position:absolute;top:100%;left:0;width:100%;background:rgba(8,8,12,.98);flex-direction:column;padding:16px 20px;gap:14px;border-bottom:1px solid var(--border)}
@@ -433,6 +459,8 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
   .match-day-banner{flex-direction:column;text-align:center;gap:10px}
   .match-day-banner .md-countdown{text-align:center}
   .donut-wrap{flex-direction:column;gap:8px}
+  .h2h-stats{grid-template-columns:repeat(2,1fr);gap:12px}
+  .h2h-summary{grid-template-columns:1fr}
 }
 @media(max-width:420px){
   .container{padding:0 14px}
@@ -478,6 +506,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
       <li><a href="#results">赛果</a></li>
       <li><a href="#schedule">赛程</a></li>
       <li><a href="#stats">数据</a></li>
+      <li><a href="#h2h">对战</a></li>
     </ul>
     <div class="nav-toggle" id="navToggle"><span></span><span></span><span></span></div>
   </div>
@@ -637,6 +666,18 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
   </div>
 </section>
 
+<section id="h2h">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-tag">Head to Head</span>
+      <h2 class="section-title">对战<span class="gold">分析</span></h2>
+      <p class="section-desc">花生传媒与联赛各战队的交手记录与PT对比</p>
+      <div class="divider"></div>
+    </div>
+    <div id="h2hSection"></div>
+  </div>
+</section>
+
 <section class="section-alt" id="about">
   <div class="container">
     <div class="section-header reveal">
@@ -684,6 +725,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
           <li><a href="#results">赛果记录</a></li>
           <li><a href="#schedule">剩余赛程</a></li>
           <li><a href="#stats">数据统计</a></li>
+          <li><a href="#h2h">对战分析</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -722,7 +764,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
 
 <!-- FALLBACK DATA: instant render before network fetch. Updated by deploy.py -->
 <script type="application/json" id="fallback-data">
-{"lastUpdated":"2026-07-23 14:47","teamTotalPt":120.6,"players":[{"id":"player04_01","name":"花生","bio":"如果没有重复，就一直天赋。","photo":"images/players/player04_01.jpg","games":4,"totalPt":136.2,"wins":2,"s2":1,"s3":1,"s4":0},{"id":"player04_04","name":"南风SW","bio":"自摸，全部交代。","photo":"images/players/player04_04.jpg","games":3,"totalPt":51.2,"wins":1,"s2":1,"s3":1,"s4":0},{"id":"player04_02","name":"百岁山","bio":"想胡吗？我点给你。","photo":"images/players/player04_02.jpg","games":3,"totalPt":-11.5,"wins":1,"s2":0,"s3":1,"s4":1},{"id":"player04_03","name":"有风南来","bio":"立直就里3，不怕就来试。","photo":"images/players/player04_03.jpg","games":6,"totalPt":-55.3,"wins":1,"s2":2,"s3":1,"s4":2}],"results":[{"date":"2026-06-28","round":"第2轮","half":"H1","player":"花生","playerId":"player04_01","score":37000,"rank":1,"pt":57.0},{"date":"2026-06-28","round":"第2轮","half":"H2","player":"百岁山","playerId":"player04_02","score":23900,"rank":3,"pt":-16.1},{"date":"2026-06-29","round":"第4轮","half":"H1","player":"有风南来","playerId":"player04_03","score":33200,"rank":1,"pt":53.2},{"date":"2026-06-29","round":"第4轮","half":"H2","player":"南风SW","playerId":"player04_04","score":42700,"rank":1,"pt":62.7},{"date":"2026-07-05","round":"第6轮","half":"H1","player":"南风SW","playerId":"player04_04","score":19700,"rank":3,"pt":-20.3},{"date":"2026-07-05","round":"第6轮","half":"H2","player":"花生","playerId":"player04_01","score":62900,"rank":1,"pt":82.9},{"date":"2026-07-05","round":"第7轮","half":"H1","player":"百岁山","playerId":"player04_02","score":-1100,"rank":4,"pt":-61.1},{"date":"2026-07-05","round":"第7轮","half":"H2","player":"花生","playerId":"player04_01","score":21900,"rank":3,"pt":-18.1},{"date":"2026-07-08","round":"第9轮","half":"H1","player":"有风南来","playerId":"player04_03","score":27200,"rank":2,"pt":7.2},{"date":"2026-07-08","round":"第9轮","half":"H2","player":"南风SW","playerId":"player04_04","score":28800,"rank":2,"pt":8.8},{"date":"2026-07-12","round":"第10轮","half":"H1","player":"有风南来","playerId":"player04_03","score":19600,"rank":3,"pt":-20.4},{"date":"2026-07-12","round":"第10轮","half":"H2","player":"有风南来","playerId":"player04_03","score":13800,"rank":4,"pt":-46.2},{"date":"2026-07-19","round":"第14轮","half":"H1","player":"花生","playerId":"player04_01","score":34400,"rank":2,"pt":14.4},{"date":"2026-07-19","round":"第14轮","half":"H2","player":"有风南来","playerId":"player04_03","score":1900,"rank":4,"pt":-58.1},{"date":"2026-07-22","round":"第17轮","half":"H1","player":"有风南来","playerId":"player04_03","score":29000,"rank":2,"pt":9.0},{"date":"2026-07-22","round":"第17轮","half":"H2","player":"百岁山","playerId":"player04_02","score":45700,"rank":1,"pt":65.7}],"upcoming":[{"round":"第21轮","date":"7月 29日","time":"19:00","weekday":"周三","today":false,"opponents":["FOUR WINDS","热血兄弟","目标达成"]},{"round":"第23轮","date":"8月 02日","time":"19:00","weekday":"周日","today":false,"opponents":["白夜Byakuya","六壬·N","抉择CHOICE"]},{"round":"第27轮","date":"8月 09日","time":"19:00","weekday":"周日","today":false,"opponents":["开始游戏","抉择CHOICE","白夜Byakuya"]},{"round":"第28轮","date":"8月 10日","time":"19:00","weekday":"周一","today":false,"opponents":["开始游戏","抉择CHOICE","目标达成"]}],"leagueStandings":[{"team_id":1,"team":"抉择CHOICE","totalPt":231.1,"is_ours":false},{"team_id":9,"team":"热血兄弟","totalPt":121.0,"is_ours":false},{"team_id":4,"team":"花生传媒","totalPt":120.6,"is_ours":true},{"team_id":7,"team":"六壬·N","totalPt":87.1,"is_ours":false},{"team_id":8,"team":"FOUR WINDS","totalPt":52.4,"is_ours":false},{"team_id":5,"team":"技高一筹","totalPt":47.4,"is_ours":false},{"team_id":3,"team":"Clover Heart","totalPt":-55.7,"is_ours":false},{"team_id":6,"team":"白夜Byakuya","totalPt":-131.1,"is_ours":false},{"team_id":2,"team":"目标达成","totalPt":-195.9,"is_ours":false},{"team_id":10,"team":"开始游戏","totalPt":-276.9,"is_ours":false}],"stats":{"totalGames":16,"totalWins":5,"completedRounds":17,"bestPlayer":{"id":"player04_01","name":"花生","bio":"如果没有重复，就一直天赋。","photo":"images/players/player04_01.jpg","games":4,"totalPt":136.2,"wins":2,"s2":1,"s3":1,"s4":0},"playerCount":4}}
+{"lastUpdated":"2026-07-23 14:56","teamTotalPt":120.6,"players":[{"id":"player04_01","name":"花生","bio":"如果没有重复，就一直天赋。","photo":"images/players/player04_01.jpg","games":4,"totalPt":136.2,"wins":2,"s2":1,"s3":1,"s4":0},{"id":"player04_04","name":"南风SW","bio":"自摸，全部交代。","photo":"images/players/player04_04.jpg","games":3,"totalPt":51.2,"wins":1,"s2":1,"s3":1,"s4":0},{"id":"player04_02","name":"百岁山","bio":"想胡吗？我点给你。","photo":"images/players/player04_02.jpg","games":3,"totalPt":-11.5,"wins":1,"s2":0,"s3":1,"s4":1},{"id":"player04_03","name":"有风南来","bio":"立直就里3，不怕就来试。","photo":"images/players/player04_03.jpg","games":6,"totalPt":-55.3,"wins":1,"s2":2,"s3":1,"s4":2}],"results":[{"date":"2026-06-28","round":"第2轮","half":"H1","player":"花生","playerId":"player04_01","score":37000,"rank":1,"pt":57.0},{"date":"2026-06-28","round":"第2轮","half":"H2","player":"百岁山","playerId":"player04_02","score":23900,"rank":3,"pt":-16.1},{"date":"2026-06-29","round":"第4轮","half":"H1","player":"有风南来","playerId":"player04_03","score":33200,"rank":1,"pt":53.2},{"date":"2026-06-29","round":"第4轮","half":"H2","player":"南风SW","playerId":"player04_04","score":42700,"rank":1,"pt":62.7},{"date":"2026-07-05","round":"第6轮","half":"H1","player":"南风SW","playerId":"player04_04","score":19700,"rank":3,"pt":-20.3},{"date":"2026-07-05","round":"第6轮","half":"H2","player":"花生","playerId":"player04_01","score":62900,"rank":1,"pt":82.9},{"date":"2026-07-05","round":"第7轮","half":"H1","player":"百岁山","playerId":"player04_02","score":-1100,"rank":4,"pt":-61.1},{"date":"2026-07-05","round":"第7轮","half":"H2","player":"花生","playerId":"player04_01","score":21900,"rank":3,"pt":-18.1},{"date":"2026-07-08","round":"第9轮","half":"H1","player":"有风南来","playerId":"player04_03","score":27200,"rank":2,"pt":7.2},{"date":"2026-07-08","round":"第9轮","half":"H2","player":"南风SW","playerId":"player04_04","score":28800,"rank":2,"pt":8.8},{"date":"2026-07-12","round":"第10轮","half":"H1","player":"有风南来","playerId":"player04_03","score":19600,"rank":3,"pt":-20.4},{"date":"2026-07-12","round":"第10轮","half":"H2","player":"有风南来","playerId":"player04_03","score":13800,"rank":4,"pt":-46.2},{"date":"2026-07-19","round":"第14轮","half":"H1","player":"花生","playerId":"player04_01","score":34400,"rank":2,"pt":14.4},{"date":"2026-07-19","round":"第14轮","half":"H2","player":"有风南来","playerId":"player04_03","score":1900,"rank":4,"pt":-58.1},{"date":"2026-07-22","round":"第17轮","half":"H1","player":"有风南来","playerId":"player04_03","score":29000,"rank":2,"pt":9.0},{"date":"2026-07-22","round":"第17轮","half":"H2","player":"百岁山","playerId":"player04_02","score":45700,"rank":1,"pt":65.7}],"upcoming":[{"round":"第21轮","date":"7月 29日","time":"19:00","weekday":"周三","today":false,"opponents":["FOUR WINDS","热血兄弟","目标达成"]},{"round":"第23轮","date":"8月 02日","time":"19:00","weekday":"周日","today":false,"opponents":["白夜Byakuya","六壬·N","抉择CHOICE"]},{"round":"第27轮","date":"8月 09日","time":"19:00","weekday":"周日","today":false,"opponents":["开始游戏","抉择CHOICE","白夜Byakuya"]},{"round":"第28轮","date":"8月 10日","time":"19:00","weekday":"周一","today":false,"opponents":["开始游戏","抉择CHOICE","目标达成"]}],"leagueStandings":[{"team_id":1,"team":"抉择CHOICE","totalPt":231.1,"is_ours":false},{"team_id":9,"team":"热血兄弟","totalPt":121.0,"is_ours":false},{"team_id":4,"team":"花生传媒","totalPt":120.6,"is_ours":true},{"team_id":7,"team":"六壬·N","totalPt":87.1,"is_ours":false},{"team_id":8,"team":"FOUR WINDS","totalPt":52.4,"is_ours":false},{"team_id":5,"team":"技高一筹","totalPt":47.4,"is_ours":false},{"team_id":3,"team":"Clover Heart","totalPt":-55.7,"is_ours":false},{"team_id":6,"team":"白夜Byakuya","totalPt":-131.1,"is_ours":false},{"team_id":2,"team":"目标达成","totalPt":-195.9,"is_ours":false},{"team_id":10,"team":"开始游戏","totalPt":-276.9,"is_ours":false}],"stats":{"totalGames":16,"totalWins":5,"completedRounds":17,"bestPlayer":{"id":"player04_01","name":"花生","bio":"如果没有重复，就一直天赋。","photo":"images/players/player04_01.jpg","games":4,"totalPt":136.2,"wins":2,"s2":1,"s3":1,"s4":0},"playerCount":4}}
 </script>
 
 <!-- Cache-bust: reload once if HTML version changes (prevents stale app.js) -->
