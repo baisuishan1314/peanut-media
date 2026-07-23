@@ -212,9 +212,16 @@ function apply(){
     return '<div class="match-row reveal"><div class="m-date"><span class="m-label">日期</span>'+r.date+'</div><div class="m-round"><span class="m-label">轮次</span>'+r.round+'</div><div class="m-half"><span class="m-label">半庄</span>'+r.half+'</div><div class="m-player"><span class="m-label">选手</span>'+r.player+'</div><div class="m-score '+scC(r.rank)+'"><span class="m-label">得点</span>'+(r.score>=0?'+':'')+r.score.toLocaleString()+'</div><div><span class="m-label">排名</span><span class="rank-badge-sm r'+r.rank+'">'+r.rank+'位</span></div><div class="m-pt '+ptC(r.pt)+'"><span class="m-label">PT</span>'+ptS(r.pt)+r.pt+'</div></div>';
   }).join('');
 
-  // Schedule
+  // Schedule — filter out completed rounds (in case embedded cache has stale data)
+  var doneRoundNums={};
+  (appData.results||[]).forEach(function(r){doneRoundNums[r.round.replace(/[^0-9]/g,'')]=true;});
+  var filteredUpcoming=(appData.upcoming||[]).filter(function(s){
+    return !doneRoundNums[s.round.replace(/[^0-9]/g,'')];
+  });
+  // Update for hero badge and other refs
+  appData._upcoming=filteredUpcoming;
   g=document.getElementById('scheduleGrid');
-  if(g)g.innerHTML=(appData.upcoming||[]).map(function(s){
+  if(g)g.innerHTML=filteredUpcoming.map(function(s){
     var seen={},opps=[];
     (s.opponents||[]).forEach(function(o){if(!seen[o]){seen[o]=1;opps.push(o);}});
     return '<div class="schedule-row reveal'+(s.today?' today':'')+'"><div class="s-date"><span class="m-label">日期</span>'+s.date+' · '+s.time+'</div><div class="s-round"><span class="m-label">轮次</span>'+s.round+'</div><div class="s-opponents"><span class="m-label">对阵</span><span class="op-chip us">★ 花生传媒</span>'+opps.map(function(t){return'<span class="op-chip">'+t+'</span>';}).join('')+'</div><div class="s-status"><span class="m-label">状态</span><span class="s-st '+(s.today?'live':'up')+'">'+(s.today?'🔴 今天':'即将开赛')+'</span></div><div class="s-link">'+(s.today?'<a href="https://space.bilibili.com/3362132" target="_blank" style="color:var(--blue)">📺 看直播 →</a>':'<span style="color:var(--t3)">'+(s.weekday||'')+'</span>')+'</div></div>';
@@ -231,7 +238,7 @@ function apply(){
   h=document.getElementById('heroHalfGames');if(h&&appData.stats)h.textContent=appData.stats.totalGames||appData.results.length;
   h=document.getElementById('heroCompletedRounds');if(h&&appData.stats)h.textContent=appData.stats.completedRounds||0;
   h=document.getElementById('heroBadge');
-  if(h&&appData.upcoming&&appData.upcoming.length){n=appData.upcoming[0];h.innerHTML='<span class="dot live"></span> RCU League 2026 · 下一场：'+n.date+(n.today?' 🔴今晚':'')+' '+n.time+' · '+n.round;}
+  if(h&&appData._upcoming&&appData._upcoming.length){n=appData._upcoming[0];h.innerHTML='<span class="dot live"></span> RCU League 2026 · 下一场：'+n.date+(n.today?' 🔴今晚':'')+' '+n.time+' · '+n.round;}
   h=document.getElementById('lastUpdated');
   if(h)h.textContent=(dataSrc==='live'?'⏱ 实时 · RCU':(dataSrc==='rcu'?'⏱ RCU直连 · ':'📦 嵌入式缓存 · '))+(appData.lastUpdated||'');
 
