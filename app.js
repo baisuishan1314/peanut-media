@@ -341,15 +341,13 @@ const Render = {
 
   _countdownTimer: null,
   _startCountdown(match) {
-    if (this._countdownTimer) clearInterval(this._countdownTimer);
+    if (this._countdownTimer) clearTimeout(this._countdownTimer);
     const cdEl = $('mdCountdown');
     const cdLabel = $('mdCdLabel');
 
     const update = () => {
-      // Parse match date + time
       const dateStr = match.date || '';
       const timeStr = match.time || '19:00';
-      // Try to extract YYYY-MM-DD from date string
       const m = dateStr.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
       if (!m) {
         if (cdEl) cdEl.textContent = match.time || '';
@@ -378,8 +376,22 @@ const Render = {
       }
     };
 
+    const scheduleNext = () => {
+      const dateStr = match.date || '';
+      const timeStr = match.time || '19:00';
+      const m = dateStr.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+      let delay = 1000;
+      if (m) {
+        const target = new Date(`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}T${timeStr}:00`);
+        const diff = target - new Date();
+        if (diff > 86400000) delay = 60000;
+        else if (diff > 3600000) delay = 10000;
+      }
+      this._countdownTimer = setTimeout(() => { update(); scheduleNext(); }, delay);
+    };
+
     update();
-    this._countdownTimer = setInterval(update, 1000);
+    scheduleNext();
   },
 
   stats() {
