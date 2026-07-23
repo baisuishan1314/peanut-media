@@ -18,6 +18,7 @@ const state = {
   source: 'fallback',  // 'fallback' | 'data-json'
   refreshTimer: null,
   isLoading: false,
+  firstRender: true,   // only apply .reveal animation on first render
   filter: { player: 'all', rank: 'all' },  // result filter state
   page: 1,
   pageSize: 10
@@ -95,10 +96,10 @@ const Data = {
     }
   },
 
-  /** Fetch data.json with cache-busting */
+  /** Fetch data.json — let browser cache handle it, add light cache-bust */
   async fetchDataJson() {
     const url = `${CONFIG.DATA_JSON}?t=${Date.now()}`;
-    const resp = await fetch(url, { cache: 'no-store' });
+    const resp = await fetch(url);
     if (!resp.ok) throw new Error(`data.json ${resp.status}`);
     return resp.json();
   },
@@ -114,11 +115,17 @@ const Data = {
     try {
       const d = await this.fetchDataJson();
       if (d && d.players && d.results) {
-        state.data = d;
-        state.source = 'data-json';
-        Render.all();
-        UI.hideError();
-        console.log('[Data] data.json loaded OK');
+        // Skip re-render if data hasn't changed (same timestamp)
+        const oldTs = state.data ? state.data.lastUpdated : '';
+        if (d.lastUpdated === oldTs && !state.firstRender) {
+          console.log('[Data] data.json unchanged, skip re-render');
+        } else {
+          state.data = d;
+          state.source = 'data-json';
+          Render.all();
+          UI.hideError();
+          console.log('[Data] data.json loaded OK');
+        }
       }
     } catch (e) {
       console.log('[Data] data.json failed:', e.message);
@@ -144,8 +151,11 @@ const Render = {
     this.ptBar();
     this.hero();
     this.dataSource();
-    // Re-observe new reveal elements
-    Events.bindReveal();
+    // Only observe reveal elements on first render — subsequent renders skip animation
+    if (state.firstRender) {
+      Events.bindReveal();
+      state.firstRender = false;
+    }
   },
 
   filterBar() {
@@ -170,7 +180,7 @@ const Render = {
         : '';
       // Donut chart for rank distribution
       const donut = Charts.donut(p.wins || 0, p.s2 || 0, p.s3 || 0, p.s4 || 0, 56);
-      return `<div class="player-card reveal" data-player="${Utils.escapeHtml(p.name)}">
+      return `<div class="player-card${state.firstRender ? ' reveal' : ''}" data-player="${Utils.escapeHtml(p.name)}">
         <div class="player-photo" data-initial="${Utils.escapeHtml(init)}">${photo}</div>
         <h3>${Utils.escapeHtml(p.name)}</h3>
         <div class="bio">"${Utils.escapeHtml(p.bio)}"</div>
@@ -280,7 +290,7 @@ const Render = {
       const link = isToday
         ? `<a href="https://space.bilibili.com/3362132" target="_blank" rel="noopener" style="color:var(--blue)">看直播 →</a>`
         : `<span style="color:var(--t3)">${Utils.escapeHtml(s.weekday || '')}</span>`;
-      return `<div class="schedule-row reveal${isToday ? ' today' : ''}">
+      return `<div class="schedule-row${state.firstRender ? ' reveal' : ''}${isToday ? ' today' : ''}">
         <div class="s-date"><span class="m-label">日期</span>${Utils.escapeHtml(s.date)} · ${Utils.escapeHtml(s.time)}</div>
         <div class="s-round"><span class="m-label">轮次</span>${Utils.escapeHtml(s.round)}</div>
         <div class="s-opponents"><span class="m-label">对阵</span><span class="op-chip us">★ 花生传媒</span>${oppChips}</div>
@@ -369,11 +379,12 @@ const Render = {
     if (!grid || !state.data.stats) return;
     const s = state.data.stats;
     const p = s.bestPlayer || {};
+    const revealCls = state.firstRender ? ' reveal' : '';
     grid.innerHTML = `
-      <div class="stat-card reveal"><div class="icon">🀄</div><div class="val">${s.totalGames || 0}</div><div class="lbl">已完成半庄</div></div>
-      <div class="stat-card reveal"><div class="icon">🏆</div><div class="val">${s.totalWins || 0}</div><div class="lbl">1位次数</div></div>
-      <div class="stat-card reveal"><div class="icon">📈</div><div class="val small">${Utils.ptSign(state.data.teamTotalPt)}${(state.data.teamTotalPt || 0).toFixed(1)}</div><div class="lbl">队伍总PT</div></div>
-      <div class="stat-card reveal"><div class="icon">⭐</div><div class="val small">${Utils.escapeHtml(p.name || '--')}</div><div class="lbl">PT王 (${Utils.ptSign(p.totalPt)}${p.totalPt || 0})</div></div>`;
+      <div class="stat-card${revealCls}"><div class="icon">🀄</div><div class="val">${s.totalGames || 0}</div><div class="lbl">已完成半庄</div></div>
+      <div class="stat-card${revealCls}"><div class="icon">🏆</div><div class="val">${s.totalWins || 0}</div><div class="lbl">1位次数</div></div>
+      <div class="stat-card${revealCls}"><div class="icon">📈</div><div class="val small">${Utils.ptSign(state.data.teamTotalPt)}${(state.data.teamTotalPt || 0).toFixed(1)}</div><div class="lbl">队伍总PT</div></div>
+      <div class="stat-card${revealCls}"><div class="icon">⭐</div><div class="val small">${Utils.escapeHtml(p.name || '--')}</div><div class="lbl">PT王 (${Utils.ptSign(p.totalPt)}${p.totalPt || 0})</div></div>`;
   },
 
   ptBar() {
@@ -582,7 +593,18 @@ const MatchModal = {
   _keyHandler: null,
 
   open(date, round, half) {
-    if (!state.data || !state.data.matchDetails) return;
+    // matchDetails may not be available if only inline fallback loaded (no matchDetails)
+    if (!state.data || !state.data.matchDetails) {
+      setHTML('mmHeader', `<div class="mm-title">${Utils.escapeHtml(round)} · ${Utils.escapeHtml(half)}</div>`);
+      setHTML('mmBody', '<div class="mm-loading">比赛详情加载中，请稍后再试...</div>');
+      const overlay = $('matchModal');
+      overlay.classList.add('open');
+      this._cleanup();
+      this._keyHandler = e => { if (e.key === 'Escape') this.close(); };
+      document.addEventListener('keydown', this._keyHandler);
+      overlay.onclick = e => { if (e.target === overlay) this.close(); };
+      return;
+    }
 
     // Find matching match detail
     const match = state.data.matchDetails.find(m =>
