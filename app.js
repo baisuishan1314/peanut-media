@@ -330,6 +330,42 @@ tryRCU().then(function(){
   console.log('[RCU] Auto-refresh active every '+REFRESH/1000+'s ('+REFRESH/60000+'min)');
 });
 
+// ====== VERSION SELF-CHECK (prevent stale cache) ======
+(function(){
+  // Extract current version from script src
+  var v='?';
+  var scripts=document.getElementsByTagName('script');
+  for(var i=0;i<scripts.length;i++){
+    var m=scripts[i].src.match(/app\.js\?v=(\w+)/);
+    if(m){v=m[1];break;}
+  }
+  console.log('[VERSION] Current:',v);
+
+  // Inject toast element
+  var toast=document.createElement('div');
+  toast.id='version-toast';
+  toast.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;background:var(--red);color:#fff;padding:10px 24px;border-radius:100px;font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(196,30,58,.5);display:none;transition:all .3s ease';
+  toast.textContent='🔄 有新版本可用，点击刷新';
+  toast.onclick=function(){location.reload(true);};
+  document.body.appendChild(toast);
+
+  // Check version.txt against current version, every 5 minutes
+  function checkVersion(){
+    fetch('https://raw.githubusercontent.com/baisuishan1314/peanut-media/main/version.txt?_t='+Date.now())
+      .then(function(r){return r.text();})
+      .then(function(latest){
+        latest=latest.trim();
+        if(latest&&latest!==v){
+          console.log('[VERSION] Outdated: '+v+' → latest: '+latest);
+          toast.style.display='block';
+        }
+      }).catch(function(){});
+  }
+  setInterval(checkVersion,300000);  // every 5 min
+  // First check after 30s (let page fully load)
+  setTimeout(checkVersion,30000);
+})();
+
 // Navbar, menu, scroll, reveal...
 var nav=document.getElementById('navbar');
 window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',window.scrollY>60);});
