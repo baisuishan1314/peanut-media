@@ -18,7 +18,9 @@ const state = {
   source: 'fallback',  // 'fallback' | 'data-json'
   refreshTimer: null,
   isLoading: false,
-  filter: { player: 'all', rank: 'all' }  // result filter state
+  filter: { player: 'all', rank: 'all' },  // result filter state
+  page: 1,
+  pageSize: 10
 };
 
 // ===== UTILS =====
@@ -204,13 +206,20 @@ const Render = {
 
     if (results.length === 0) {
       body.innerHTML = '<div class="filter-empty">没有符合条件的比赛记录</div>';
+      this.pagination(0);
       return;
     }
 
-    body.innerHTML = results.map(r => {
+    // Pagination: slice results for current page
+    const totalPages = Math.ceil(results.length / state.pageSize);
+    if (state.page > totalPages) state.page = 1;
+    const start = (state.page - 1) * state.pageSize;
+    const pageResults = results.slice(start, start + state.pageSize);
+
+    body.innerHTML = pageResults.map(r => {
       const scoreCls = Utils.scoreClass(r.rank);
       const ptCls = Utils.ptClass(r.pt);
-      return `<div class="match-row reveal">
+      return `<div class="match-row clickable" data-date="${Utils.escapeHtml(r.date)}" data-round="${Utils.escapeHtml(r.round)}" data-half="${Utils.escapeHtml(r.half)}">
         <div class="m-date"><span class="m-label">日期</span>${Utils.escapeHtml(r.date)}</div>
         <div class="m-round"><span class="m-label">轮次</span>${Utils.escapeHtml(r.round)}</div>
         <div class="m-half"><span class="m-label">半庄</span>${r.half}</div>
@@ -220,6 +229,30 @@ const Render = {
         <div class="m-pt ${ptCls}"><span class="m-label">PT</span>${Utils.ptSign(r.pt)}${r.pt}</div>
       </div>`;
     }).join('');
+
+    // Render pagination controls
+    this.pagination(totalPages);
+  },
+
+  pagination(totalPages) {
+    const pagEl = $('resultsPagination');
+    if (!pagEl) return;
+    if (totalPages <= 1) {
+      pagEl.innerHTML = '';
+      pagEl.style.display = 'none';
+      return;
+    }
+    pagEl.style.display = 'flex';
+    let html = '';
+    // Prev button
+    html += `<button class="pag-btn ${state.page === 1 ? 'disabled' : ''}" data-page="${state.page - 1}" ${state.page === 1 ? 'disabled' : ''}>← 上一页</button>`;
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="pag-num ${i === state.page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+    // Next button
+    html += `<button class="pag-btn ${state.page === totalPages ? 'disabled' : ''}" data-page="${state.page + 1}" ${state.page === totalPages ? 'disabled' : ''}>下一页 →</button>`;
+    pagEl.innerHTML = html;
   },
 
   schedule() {
@@ -349,24 +382,70 @@ const Render = {
     const pt = state.data.teamTotalPt || 0;
     const ptCls = pt >= 0 ? 'pos' : 'neg';
 
-    // Scale: use ±300 as visual range, cap at edges
-    const maxRange = 300;
-    const absPt = Math.min(Math.abs(pt), maxRange);
-    const fillPct = (absPt / maxRange) * 50; // 50% of bar (half is for each side)
+    // League standings for comparison
+    const standings = state.data.leagueStandings || [];
+    const firstPlace = standings[0] || null;
+    const fourthPlace = standings[3] || null;
+    const ourRank = standings.findIndex(s => s.is_ours) + 1;
+
+    // Scale: use dynamic range based on 1st and last place
+    const allPts = standings.map(s => s.totalPt);
+    const minPt = allPts.length ? Math.min(...allPts, -300) : -300;
+    const maxPt = allPts.length ? Math.max(...allPts, 300) : 300;
+    const range = maxPt - minPt;
+
+    // Position helper: convert PT to % position on bar (0% = leftmost, 100% = rightmost)
+    const ptToPct = (val) => ((val - minPt) / range * 100).toFixed(1);
+
+    // Our team's fill: from minPt to our PT
+    const ourPct = ptToPct(pt);
+    const zeroPct = ptToPct(0);
+    const firstPct = firstPlace ? ptToPct(firstPlace.totalPt) : null;
+    const fourthPct = fourthPlace ? ptToPct(fourthPlace.totalPt) : null;
+
+    // Build comparison markers
+    let markers = '';
+    if (firstPct) {
+      markers += `<div class="pt-bar-marker first" style="left:${firstPct}%">
+        <div class="pt-bar-marker-line"></div>
+        <div class="pt-bar-marker-label">第1名 ${firstPlace.team} ${Utils.ptSign(firstPlace.totalPt)}${firstPlace.totalPt}</div>
+      </div>`;
+    }
+    if (fourthPct) {
+      markers += `<div class="pt-bar-marker fourth" style="left:${fourthPct}%">
+        <div class="pt-bar-marker-line"></div>
+        <div class="pt-bar-marker-label">前4线 ${fourthPlace.team} ${Utils.ptSign(fourthPlace.totalPt)}${fourthPlace.totalPt}</div>
+      </div>`;
+    }
+
+    // Our team marker
+    markers += `<div class="pt-bar-marker ours" style="left:${ourPct}%">
+      <div class="pt-bar-marker-dot"></div>
+      <div class="pt-bar-marker-label ours-label">花生传媒 第${ourRank}名 ${Utils.ptSign(pt)}${pt.toFixed(1)}</div>
+    </div>`;
+
+    // Fill bar from left to our position
+    const fillWidth = ourPct;
 
     section.innerHTML = `
       <div class="pt-bar-header">
-        <div class="pt-bar-title">📊 队伍联赛PT进度</div>
+        <div class="pt-bar-title">📊 联赛PT进度对比</div>
         <div class="pt-bar-value ${ptCls}">${Utils.ptSign(pt)}${pt.toFixed(1)}</div>
       </div>
-      <div class="pt-bar-track">
-        <div class="pt-bar-zero"></div>
-        <div class="pt-bar-fill ${ptCls}" style="width:${fillPct}%"></div>
+      <div class="pt-bar-track-wide">
+        <div class="pt-bar-fill-wide ${ptCls}" style="width:${fillWidth}%"></div>
+        <div class="pt-bar-zero-wide" style="left:${zeroPct}%"></div>
+        ${markers}
       </div>
-      <div class="pt-bar-labels">
-        <span>-300</span>
-        <span style="color:var(--t3)">0</span>
-        <span>+300</span>
+      <div class="pt-bar-labels-wide">
+        <span>${minPt}</span>
+        <span style="position:absolute;left:${zeroPct}%;transform:translateX(-50%);color:var(--t3)">0</span>
+        <span style="float:right">${maxPt}+</span>
+      </div>
+      <div class="pt-bar-legend">
+        <div class="pt-bar-leg-item"><span class="pt-leg-dot first"></span>第1名线</div>
+        <div class="pt-bar-leg-item"><span class="pt-leg-dot fourth"></span>前4名线</div>
+        <div class="pt-bar-leg-item"><span class="pt-leg-dot ours"></span>花生传媒 (第${ourRank}名)</div>
       </div>`;
   },
 
@@ -498,6 +577,77 @@ const Modal = {
   }
 };
 
+// ===== MATCH MODAL (show all 4 players' scores for a half) =====
+const MatchModal = {
+  _keyHandler: null,
+
+  open(date, round, half) {
+    if (!state.data || !state.data.matchDetails) return;
+
+    // Find matching match detail
+    const match = state.data.matchDetails.find(m =>
+      m.date === date && m.round === round && m.half === half
+    );
+    if (!match) return;
+
+    // Sort players by rank
+    const players = [...match.players].sort((a, b) => a.rank - b.rank);
+
+    // Build header
+    setHTML('mmHeader', `
+      <div class="mm-title">${Utils.escapeHtml(match.round)} · ${Utils.escapeHtml(match.half)}</div>
+      <div class="mm-date">${Utils.escapeHtml(match.date)}</div>
+    `);
+
+    // Build player table
+    const rankColors = ['gold', 'silver', 'bronze', 'iron'];
+    const rankLabels = ['1位', '2位', '3位', '4位'];
+    let rows = players.map((p, i) => {
+      const scCls = Utils.scoreClass(p.rank);
+      const ptCls = Utils.ptClass(p.pt);
+      const oursCls = p.is_ours ? ' ours' : '';
+      return `<div class="mm-player-row${oursCls}">
+        <div class="mm-rank"><span class="rank-badge-sm r${p.rank}">${rankLabels[i]}</span></div>
+        <div class="mm-team${oursCls}">${Utils.escapeHtml(p.team)}${p.is_ours ? ' ★' : ''}</div>
+        <div class="mm-player-name">${Utils.escapeHtml(p.player)}</div>
+        <div class="mm-score ${scCls}">${Utils.formatScore(p.score)}</div>
+        <div class="mm-pt ${ptCls}">${Utils.ptSign(p.pt)}${p.pt}</div>
+      </div>`;
+    }).join('');
+
+    setHTML('mmBody', `
+      <div class="mm-player-thead">
+        <div>排名</div><div>战队</div><div>选手</div><div>得点</div><div>PT</div>
+      </div>
+      <div class="mm-player-list">${rows}</div>
+    `);
+
+    // Show modal
+    const overlay = $('matchModal');
+    overlay.classList.add('open');
+
+    // Bind close events
+    this._cleanup();
+    this._keyHandler = e => { if (e.key === 'Escape') this.close(); };
+    document.addEventListener('keydown', this._keyHandler);
+    overlay.onclick = e => { if (e.target === overlay) this.close(); };
+  },
+
+  close() {
+    $('matchModal').classList.remove('open');
+    this._cleanup();
+  },
+
+  _cleanup() {
+    if (this._keyHandler) {
+      document.removeEventListener('keydown', this._keyHandler);
+      this._keyHandler = null;
+    }
+    const overlay = $('matchModal');
+    if (overlay) overlay.onclick = null;
+  }
+};
+
 // ===== EVENTS =====
 const Events = {
   _revealObserver: null,
@@ -505,6 +655,8 @@ const Events = {
   init() {
     this.nav();
     this.modal();
+    this.matchModal();
+    this.pagination();
     this.retry();
     this.scroll();
     this.filter();
@@ -576,6 +728,44 @@ const Events = {
     }
   },
 
+  matchModal() {
+    // Match modal close button
+    const mmClose = $('matchModalClose');
+    if (mmClose) mmClose.addEventListener('click', () => MatchModal.close());
+
+    // Match row click (event delegation on results body)
+    const resultsBody = $('resultsBody');
+    if (resultsBody) {
+      resultsBody.addEventListener('click', e => {
+        const row = e.target.closest('.match-row.clickable');
+        if (!row) return;
+        const date = row.getAttribute('data-date');
+        const round = row.getAttribute('data-round');
+        const half = row.getAttribute('data-half');
+        if (date && round && half) MatchModal.open(date, round, half);
+      });
+    }
+  },
+
+  pagination() {
+    const pagEl = $('resultsPagination');
+    if (pagEl) {
+      pagEl.addEventListener('click', e => {
+        const btn = e.target.closest('[data-page]');
+        if (!btn || btn.disabled) return;
+        const page = parseInt(btn.getAttribute('data-page'));
+        if (page < 1 || isNaN(page)) return;
+        state.page = page;
+        Render.results();
+        // Scroll to results section
+        const resultsSection = $('results');
+        if (resultsSection) {
+          window.scrollTo({ top: resultsSection.offsetTop - 70, behavior: 'smooth' });
+        }
+      });
+    }
+  },
+
   retry() {
     const btn = $('retryBtn');
     if (btn) {
@@ -600,6 +790,7 @@ const Events = {
         playerFilter.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.filter.player = btn.getAttribute('data-player');
+        state.page = 1; // Reset to first page on filter change
         Render.results();
       });
     }
@@ -613,6 +804,7 @@ const Events = {
         rankFilter.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.filter.rank = btn.getAttribute('data-rank');
+        state.page = 1; // Reset to first page on filter change
         Render.results();
       });
     }
