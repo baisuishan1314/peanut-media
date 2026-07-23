@@ -8,31 +8,20 @@
 
 // ===== CONFIG =====
 const CONFIG = {
-  RCU_BASE: 'http://rcu-league.com',
   DATA_JSON: 'data.json',
-  REFRESH_MS: 30 * 60 * 1000, // 30 min
-  RETURN_POINTS: 30000,
-  RANKING_POINTS: [50, 10, -10, -30],
-  CORS_PROXIES: [
-    url => `https://proxy.cors.sh/${url}`,
-    url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-  ]
+  REFRESH_MS: 30 * 60 * 1000 // 30 min — RCU data synced by GitHub Actions
 };
 
 // ===== STATE =====
 const state = {
   data: null,
-  source: 'fallback',  // 'fallback' | 'data-json' | 'rcu-live'
+  source: 'fallback',  // 'fallback' | 'data-json'
   refreshTimer: null,
   isLoading: false
 };
 
 // ===== UTILS =====
 const Utils = {
-  calcPT(score, rank) {
-    return Math.round(((score - CONFIG.RETURN_POINTS) / 1000 + CONFIG.RANKING_POINTS[rank]) * 10) / 10;
-  },
   ptSign(v) { return v > 0 ? '+' : ''; },
   ptClass(v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; },
   scoreClass(rank) { return rank === 1 ? 'good' : rank === 2 ? 'ok' : rank === 4 ? 'bad' : ''; },
@@ -83,179 +72,14 @@ const Data = {
     return resp.json();
   },
 
-  /** Fetch JSON from RCU via CORS proxy chain */
-  async rcuFetch(path) {
-    const fullUrl = CONFIG.RCU_BASE + path;
-    // Direct fetch only on HTTP pages (avoids mixed-content block)
-    if (location.protocol === 'http:') {
-      try {
-        const r = await fetch(fullUrl);
-        if (r.ok) return r.json();
-      } catch (_) { /* fall through to proxies */ }
-    }
-    // Try each CORS proxy
-    for (const proxy of CONFIG.CORS_PROXIES) {
-      try {
-        const r = await fetch(proxy(fullUrl), {
-          headers: { 'x-requested-with': 'XMLHttpRequest' }
-        });
-        if (r.ok) return r.json();
-      } catch (_) { /* try next */ }
-    }
-    throw new Error('All CORS proxies failed for ' + path);
-  },
+  /** RCU live fetch removed — data synced server-side by GitHub Actions.
+   *  Frontend only reads data.json (same-origin, no CORS issues). */
 
-  /** Compute full dataset from RCU live sources */
-  async fetchRCULive() {
-    const [results, players, teams, schedule] = await Promise.all([
-      this.rcuFetch('/data/results.json'),
-      this.rcuFetch('/data/players.json'),
-      this.rcuFetch('/data/teams.json'),
-      this.rcuFetch('/data/schedule.json')
-    ]);
-
-    // Team name map
-    const teamNames = {};
-    (teams.teams || []).forEach(t => { teamNames[t.id] = t.name || ('Team ' + t.id); });
-
-    // Team 4 players
-    const t4p = {};
-    (players.teams || []).forEach(team => {
-      if (team.team_id === 4) {
-        (team.players || []).forEach(p => {
-          t4p[p.player_id] = {
-            name: p.name, bio: p.bio || '',
-            photo: p.photo ? CONFIG.RCU_BASE + '/' + p.photo : ''
-          };
-        });
-      }
-    });
-
-    // Player stats accumulator
-    const ps = {};
-    Object.keys(t4p).forEach(pid => {
-      ps[pid] = { games: 0, totalPt: 0, wins: 0, s2: 0, s3: 0, s4: 0 };
-    });
-
-    const allResults = [];
-    let teamTotalPt = 0;
-
-    // Filter completed matches
-    const completed = (results.results || []).filter(r =>
-      r.first_half && r.first_half.east && r.first_half.east.score != null
-    );
-
-    completed.forEach(r => {
-      ['first_half', 'second_half'].forEach(hk => {
-        const half = r[hk];
-        if (!half) return;
-        const entries = [];
-        ['east', 'south', 'west', 'north'].forEach(pos => {
-          const t = half[pos];
-          if (t && t.score != null) {
-            entries.push({ teamId: t.team_id, score: t.score, playerId: t.player_id || '' });
-          }
-        });
-        entries.sort((a, b) => b.score - a.score);
-
-        for (let rank = 0; rank < entries.length; rank++) {
-          if (entries[rank].teamId === 4) {
-            const e = entries[rank];
-            const pid = e.playerId;
-            const pt = Utils.calcPT(e.score, rank);
-            teamTotalPt += pt;
-            if (pid && ps[pid]) {
-              ps[pid].games++;
-              ps[pid].totalPt += pt;
-              if (rank === 0) ps[pid].wins++;
-              else if (rank === 1) ps[pid].s2++;
-              else if (rank === 2) ps[pid].s3++;
-              else ps[pid].s4++;
-            }
-            const pn = t4p[pid] ? t4p[pid].name : ('Player ' + pid);
-            const roundNum = Utils.roundNum(r.round);
-            allResults.push({
-              date: r.date || '', round: '第' + roundNum + '轮',
-              half: hk === 'first_half' ? 'H1' : 'H2',
-              player: pn, playerId: pid, score: e.score, rank: rank + 1, pt: pt
-            });
-            return;
-          }
-        }
-      });
-    });
-
-    // Sort results
-    allResults.sort((a, b) => {
-      const ra = Utils.roundNum(a.round), rb = Utils.roundNum(b.round);
-      return ra !== rb ? ra - rb : a.half.localeCompare(b.half);
-    });
-
-    // Players array
-    const plist = Object.keys(t4p).map(pid => {
-      const s = ps[pid];
-      return {
-        id: pid, name: t4p[pid].name, bio: t4p[pid].bio, photo: t4p[pid].photo,
-        games: s.games, totalPt: Utils.roundTo1(s.totalPt),
-        wins: s.wins, s2: s.s2, s3: s.s3, s4: s.s4
-      };
-    }).sort((a, b) => b.totalPt - a.totalPt);
-
-    // Completed rounds
-    const doneRounds = {};
-    completed.forEach(r => { doneRounds[String(Utils.roundNum(r.round))] = true; });
-
-    // Upcoming schedule
-    const upcoming = [];
-    (schedule.schedule || []).forEach(s => {
-      const sn = Utils.roundNum(s.round);
-      if (doneRounds[String(sn)]) return;
-
-      let involved = false;
-      const opponents = [];
-      const scan = list => {
-        (list || []).forEach(t => {
-          if (t.team_id === 4) involved = true;
-          else opponents.push(teamNames[t.team_id] || ('Team ' + t.team_id));
-        });
-      };
-      scan(s.teams);
-      if (s.second_match) scan(s.second_match.teams);
-      if (!involved) return;
-
-      // Deduplicate
-      const seen = {}, uops = [];
-      opponents.forEach(o => { if (!seen[o]) { seen[o] = 1; uops.push(o); } });
-
-      const dd = s.date_display || s.date || '';
-      upcoming.push({
-        round: s.round || ('第' + sn + '轮'), date: dd, time: s.time || '19:00',
-        weekday: s.weekday || '',
-        today: s.date === Utils.todayStr(),
-        opponents: uops
-      });
-    });
-
-    const totalGames = plist.reduce((s, p) => s + p.games, 0);
-    const totalWins = plist.reduce((s, p) => s + p.wins, 0);
-
-    return {
-      lastUpdated: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }),
-      teamTotalPt: Utils.roundTo1(teamTotalPt),
-      players: plist, results: allResults, upcoming: upcoming,
-      stats: {
-        totalGames, totalWins, completedRounds: completed.length,
-        bestPlayer: plist[0] || null, playerCount: plist.length
-      }
-    };
-  },
-
-  /** Try to refresh: data.json first, then RCU live */
+  /** Refresh from data.json (synced by GitHub Actions every 30 min) */
   async refresh() {
     if (state.isLoading) return;
     state.isLoading = true;
 
-    // Step 1: Try data.json (most reliable, same origin)
     try {
       const d = await this.fetchDataJson();
       if (d && d.players && d.results) {
@@ -267,31 +91,8 @@ const Data = {
       }
     } catch (e) {
       console.log('[Data] data.json failed:', e.message);
-    }
-
-    // Step 2: Try RCU live (background, non-blocking)
-    try {
-      const d = await this.fetchRCULive();
-      if (d && d.players && d.results) {
-        // Preserve local photo paths from fallback (RCU photos are HTTP, blocked on HTTPS)
-        if (state.data && state.data.players) {
-          const localPhotos = {};
-          state.data.players.forEach(p => { localPhotos[p.id] = p.photo; });
-          d.players.forEach(p => {
-            if (localPhotos[p.id]) p.photo = localPhotos[p.id];
-          });
-        }
-        state.data = d;
-        state.source = 'rcu-live';
-        Render.all();
-        UI.hideError();
-        console.log('[Data] RCU live loaded OK');
-      }
-    } catch (e) {
-      console.log('[Data] RCU live failed:', e.message);
-      // If we have NO data at all, show error
       if (!state.data) {
-        UI.showError('无法连接RCU数据源，请检查网络后重试');
+        UI.showError('数据加载失败，请稍后重试');
       }
     }
 
@@ -431,8 +232,7 @@ const Render = {
     if (!el) return;
     const labels = {
       'fallback': '📦 内置缓存',
-      'data-json': '⚡ 同步数据',
-      'rcu-live': '⏱ 实时 · RCU'
+      'data-json': '⚡ 同步数据'
     };
     const label = labels[state.source] || labels['fallback'];
     el.textContent = `${label} · ${state.data.lastUpdated || ''}`;
