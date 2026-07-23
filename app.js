@@ -115,9 +115,16 @@ const Data = {
     try {
       const d = await this.fetchDataJson();
       if (d && d.players && d.results) {
-        // Skip re-render if data hasn't changed (same timestamp)
+        const isFallback = state.source === 'fallback';
         const oldTs = state.data ? state.data.lastUpdated : '';
-        if (d.lastUpdated === oldTs && !state.firstRender) {
+
+        if (isFallback && d.lastUpdated === oldTs) {
+          // Upgrading from slim fallback to full data.json — same timestamp,
+          // just swap state.data to get matchDetails/leagueStandings without re-render
+          state.data = d;
+          state.source = 'data-json';
+          console.log('[Data] Upgraded from fallback to data.json (silently merged matchDetails)');
+        } else if (!isFallback && d.lastUpdated === oldTs && !state.firstRender) {
           console.log('[Data] data.json unchanged, skip re-render');
         } else {
           state.data = d;
