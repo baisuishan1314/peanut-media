@@ -205,6 +205,53 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
 .reveal.visible{opacity:1;transform:translateY(0)}
 
+/* PLAYER MODAL */
+.player-modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.player-modal-overlay.open{opacity:1;pointer-events:auto}
+.player-modal{background:var(--card);border:1px solid var(--border);border-radius:20px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;padding:0;transform:translateY(20px);transition:transform .35s cubic-bezier(.25,.46,.45,.94)}
+.player-modal-overlay.open .player-modal{transform:translateY(0)}
+.player-modal-close{position:sticky;top:0;float:right;z-index:10;width:36px;height:36px;margin:16px 16px 0 0;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:50%;color:var(--t2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--trans)}
+.player-modal-close:hover{background:rgba(255,255,255,.12);color:var(--t1)}
+.pm-header{text-align:center;padding:32px 24px 20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(234,179,8,.04),transparent)}
+.pm-photo{width:88px;height:88px;border-radius:50%;margin:0 auto 14px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:900;color:var(--gold);border:3px solid rgba(234,179,8,.25);overflow:hidden}
+.pm-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pm-name{font-size:1.4rem;font-weight:900;margin-bottom:4px}
+.pm-bio{font-size:.82rem;color:var(--t2);font-style:italic;margin-bottom:16px}
+.pm-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.pm-sum-item{text-align:center}
+.pm-sum-item .v{font-family:var(--mono);font-size:1.3rem;font-weight:900;color:var(--gold);line-height:1}
+.pm-sum-item .v.neg{color:var(--red2)}
+.pm-sum-item .l{font-size:.64rem;color:var(--t3);margin-top:3px}
+.pm-rank-bar{margin:0 24px;display:flex;gap:6px;height:28px;border-radius:8px;overflow:hidden;margin-bottom:20px}
+.pm-rank-bar div{display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;font-family:var(--mono);transition:var(--trans)}
+.pm-rk-gold{background:rgba(212,175,55,.2);color:var(--gold);border:1px solid rgba(212,175,55,.3)}
+.pm-rk-silver{background:rgba(192,192,192,.1);color:var(--silver);border:1px solid rgba(192,192,192,.2)}
+.pm-rk-bronze{background:rgba(205,127,50,.1);color:var(--bronze);border:1px solid rgba(205,127,50,.2)}
+.pm-rk-iron{background:rgba(196,30,58,.1);color:var(--red2);border:1px solid rgba(196,30,58,.2)}
+.pm-body{padding:20px 24px 28px}
+.pm-body h4{font-size:.78rem;font-weight:700;color:var(--gold);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
+.pm-match-list{display:flex;flex-direction:column;gap:6px}
+.pm-match-row{display:grid;grid-template-columns:65px 60px 75px 60px 1fr;gap:8px;align-items:center;padding:10px 14px;background:rgba(0,0,0,.15);border-radius:8px;border:1px solid var(--border);font-size:.78rem;transition:var(--trans)}
+.pm-match-row:hover{background:rgba(0,0,0,.25)}
+.pm-match-row .r-date{color:var(--t2);font-size:.72rem}
+.pm-match-row .r-round{font-weight:700}
+.pm-match-row .r-score{font-family:var(--mono);font-weight:700}
+.pm-match-row .r-score.good{color:var(--green)}
+.pm-match-row .r-score.ok{color:var(--gold)}
+.pm-match-row .r-score.bad{color:var(--red2)}
+.pm-match-row .r-pt{font-family:var(--mono);font-weight:700;font-size:.76rem}
+.pm-match-row .r-pt.pos{color:var(--green)}.pm-match-row .r-pt.neg{color:var(--red2)}
+.pm-match-row .r-rank{font-size:.65rem;font-weight:700;font-family:var(--mono)}
+.pm-empty{text-align:center;padding:30px;color:var(--t3);font-size:.82rem}
+
+@media(max-width:480px){
+  .player-modal{max-width:100%;border-radius:16px}
+  .pm-summary{grid-template-columns:repeat(2,1fr);gap:8px}
+  .pm-match-row{grid-template-columns:50px 50px 60px 50px 1fr;gap:4px;padding:8px 10px;font-size:.72rem}
+  .pm-header{padding:24px 16px 16px}
+  .pm-body{padding:16px}
+}
+
 /* MOBILE LABEL - hidden on desktop */
 .m-label{display:none}
 
@@ -463,6 +510,15 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
   </div>
 </footer>
 
+
+<!-- PLAYER MODAL -->
+<div class="player-modal-overlay" id="playerModal">
+  <div class="player-modal">
+    <button class="player-modal-close" onclick="closePlayerModal()">✕</button>
+    <div class="pm-header" id="pmHeader"></div>
+    <div class="pm-body" id="pmBody"></div>
+  </div>
+</div>
 
 <script>var EMBEDDED_DATA = {"lastUpdated":"2026-07-22 11:00","teamTotalPt":45.9,"players":[{"id":"player04_01","name":"花生","bio":"如果没有重复，就一直天赋。","photo":"images/players/player04_01.jpg","games":4,"totalPt":136.2,"wins":2,"s2":1,"s3":1,"s4":0},{"id":"player04_02","name":"百岁山","bio":"想胡吗？我点给你。","photo":"images/players/player04_02.jpg","games":2,"totalPt":-77.2,"wins":0,"s2":0,"s3":1,"s4":1},{"id":"player04_03","name":"有风南来","bio":"立直就里3，不怕就来试。","photo":"images/players/player04_03.jpg","games":5,"totalPt":-64.3,"wins":1,"s2":1,"s3":1,"s4":2},{"id":"player04_04","name":"南风SW","bio":"自摸，全部交代。","photo":"images/players/player04_04.jpg","games":3,"totalPt":51.2,"wins":1,"s2":1,"s3":1,"s4":0}],"results":[{"date":"6/28","round":"第2轮","half":"H1","player":"花生","playerId":"player04_01","score":37000,"rank":1,"pt":57},{"date":"6/28","round":"第2轮","half":"H2","player":"百岁山","playerId":"player04_02","score":23900,"rank":3,"pt":-16.1},{"date":"6/29","round":"第4轮","half":"H1","player":"有风南来","playerId":"player04_03","score":33200,"rank":1,"pt":53.2},{"date":"6/29","round":"第4轮","half":"H2","player":"南风SW","playerId":"player04_04","score":42700,"rank":1,"pt":62.7},{"date":"7/5","round":"第6轮","half":"H1","player":"南风SW","playerId":"player04_04","score":19700,"rank":3,"pt":-20.3},{"date":"7/5","round":"第6轮","half":"H2","player":"花生","playerId":"player04_01","score":62900,"rank":1,"pt":82.9},{"date":"7/5","round":"第7轮","half":"H1","player":"百岁山","playerId":"player04_02","score":-1100,"rank":4,"pt":-61.1},{"date":"7/5","round":"第7轮","half":"H2","player":"花生","playerId":"player04_01","score":21900,"rank":3,"pt":-18.1},{"date":"7/8","round":"第9轮","half":"H1","player":"有风南来","playerId":"player04_03","score":27200,"rank":2,"pt":7.2},{"date":"7/8","round":"第9轮","half":"H2","player":"南风SW","playerId":"player04_04","score":28800,"rank":2,"pt":8.8},{"date":"7/12","round":"第10轮","half":"H1","player":"有风南来","playerId":"player04_03","score":19600,"rank":3,"pt":-20.4},{"date":"7/12","round":"第10轮","half":"H2","player":"有风南来","playerId":"player04_03","score":13800,"rank":4,"pt":-46.2},{"date":"7/19","round":"第14轮","half":"H1","player":"有风南来","playerId":"player04_03","score":-3500,"rank":4,"pt":-63.5},{"date":"7/19","round":"第14轮","half":"H2","player":"花生","playerId":"player04_01","score":28400,"rank":2,"pt":8.4}],"upcoming":[{"date":"7/22","time":"19:00","round":"第17轮","weekday":"周二","opponents":["技高一筹","热血兄弟","目标达成"],"today":true},{"date":"7/29","time":"19:00","round":"第21轮","weekday":"周二","opponents":["FOUR WINDS","热血兄弟","目标达成"],"today":false},{"date":"8/02","time":"19:00","round":"第23轮","weekday":"周六","opponents":["白夜Byakuya","六壬·N","抉择CHOICE"],"today":false},{"date":"8/09","time":"19:00","round":"第27轮","weekday":"周六","opponents":["开始游戏","抉择CHOICE","白夜Byakuya"],"today":false},{"date":"8/10","time":"19:00","round":"第28轮","weekday":"周日","opponents":["开始游戏","抉择CHOICE","目标达成"],"today":false}],"stats":{"totalGames":14,"totalWins":5,"completedRounds":8,"bestPlayer":{"name":"花生","totalPt":136.2}}};</script>
 <script src="app.js?v=20260723b"></script>
