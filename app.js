@@ -103,8 +103,9 @@ async function rcuCompute(){
             else ps[pid].s4++;
           }
           var pn=t4p[pid]?t4p[pid].name:('Player '+pid);
+          var roundNum=String(r.round).replace(/[^0-9]/g,'');
           allResults.push({
-            date:r.date||'',round:'第'+r.round+'轮',
+            date:r.date||'',round:'第'+roundNum+'轮',
             half:hk==='first_half'?'H1':'H2',
             player:pn,playerId:pid,score:e.score,rank:rank+1,pt:pt
           });
@@ -134,16 +135,18 @@ async function rcuCompute(){
   }
   plist.sort(function(a,b){return b.totalPt-a.totalPt;});
 
-  // Completed round numbers
+  // Completed round numbers (extract numeric IDs for comparison)
   var doneRounds={};
-  for(var i=0;i<completed.length;i++)doneRounds[completed[i].round]=true;
+  for(var i=0;i<completed.length;i++){
+    doneRounds[String(completed[i].round).replace(/[^0-9]/g,'')]=true;
+  }
 
   // Upcoming schedule (Team 4 only, not completed)
   var upcoming=[];
   for(var i=0;i<(schedule.schedule||[]).length;i++){
     var s=schedule.schedule[i];
     var sr=s.round||'',sn=typeof sr==='string'?parseInt(sr.replace(/[^0-9]/g,'')):parseInt(sr);
-    if(doneRounds[sn])continue;
+    if(doneRounds[String(sn)])continue;
 
     var involved=false,opponents=[];
     function scan(list){
