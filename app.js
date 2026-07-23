@@ -122,6 +122,7 @@ const Data = {
           // just swap state.data to get matchDetails/leagueStandings without re-render
           state.data = d;
           state.source = 'data-json';
+          Render.headToHead();
           console.log('[Data] Upgraded from fallback to data.json (silently merged matchDetails)');
         } else if (!isFallback && d.lastUpdated === oldTs && !state.firstRender) {
           console.log('[Data] data.json unchanged, skip re-render');
@@ -155,6 +156,7 @@ const Render = {
     this.matchDayBanner();
     this.stats();
     this.ptBar();
+    this.headToHead();
     this.hero();
     this.dataSource();
     // Only observe reveal elements on first render — subsequent renders skip animation
@@ -468,6 +470,85 @@ const Render = {
         <div class="pt-bar-leg-item"><span class="pt-leg-dot fourth"></span>前4名 ${fourthPlace ? fourthPlace.team : ''}</div>
         <div class="pt-bar-leg-item"><span class="pt-leg-dot ours"></span>花生传媒 (第${ourRank}名)</div>
       </div>`;
+  },
+
+  headToHead() {
+    const section = $('h2hSection');
+    if (!section) return;
+
+    const matchDetails = state.data.matchDetails;
+    if (!matchDetails || matchDetails.length === 0) {
+      section.innerHTML = '<div class="h2h-empty">比赛详情数据加载中，请稍后再试...</div>';
+      return;
+    }
+
+    // Build head-to-head stats: for each opponent team at the same table,
+    // track match count, our PT, their PT, and rank-based wins/losses
+    const h2h = {};
+
+    matchDetails.forEach(m => {
+      const ourPlayer = m.players.find(p => p.is_ours);
+      if (!ourPlayer) return; // skip matches where we didn't participate
+
+      m.players.forEach(p => {
+        if (p.is_ours) return;
+        const team = p.team;
+        if (!h2h[team]) {
+          h2h[team] = { team, matchCount: 0, ourPt: 0, theirPt: 0, wins: 0, losses: 0 };
+        }
+        h2h[team].matchCount++;
+        h2h[team].ourPt += ourPlayer.pt;
+        h2h[team].theirPt += p.pt;
+        if (ourPlayer.rank < p.rank) h2h[team].wins++;
+        else if (ourPlayer.rank > p.rank) h2h[team].losses++;
+      });
+    });
+
+    // Sort by match count desc, then by our PT desc
+    const arr = Object.values(h2h).sort((a, b) => b.matchCount - a.matchCount || b.ourPt - a.ourPt);
+
+    // Summary totals
+    const totalMatches = arr.reduce((s, o) => s + o.matchCount, 0);
+    const totalWins = arr.reduce((s, o) => s + o.wins, 0);
+    const totalLosses = arr.reduce((s, o) => s + o.losses, 0);
+    const revealCls = state.firstRender ? ' reveal' : '';
+
+    // Summary cards
+    let html = `<div class="h2h-summary${revealCls}">
+      <div class="h2h-sum-card"><div class="v">${arr.length}</div><div class="l">交手战队</div></div>
+      <div class="h2h-sum-card"><div class="v">${totalMatches}</div><div class="l">总交手次数</div></div>
+      <div class="h2h-sum-card"><div class="v">${totalWins}<span class="vs">vs</span>${totalLosses}</div><div class="l">排名胜负</div></div>
+    </div>`;
+
+    // Per-team cards
+    arr.forEach(o => {
+      const ourPtR = Utils.roundTo1(o.ourPt);
+      const theirPtR = Utils.roundTo1(o.theirPt);
+      const netPt = Utils.roundTo1(o.ourPt - o.theirPt);
+      const ourPtCls = ourPtR >= 0 ? 'pos' : 'neg';
+      const theirPtCls = theirPtR >= 0 ? 'pos' : 'neg';
+      const netCls = netPt >= 0 ? 'pos' : 'neg';
+      const winRate = o.matchCount > 0 ? Math.round(o.wins / o.matchCount * 100) : 0;
+
+      html += `<div class="h2h-card${revealCls}">
+        <div class="h2h-team">${Utils.escapeHtml(o.team)}</div>
+        <div class="h2h-stats">
+          <div class="h2h-stat"><div class="v">${o.matchCount}</div><div class="l">交手</div></div>
+          <div class="h2h-stat"><div class="v ${ourPtCls}">${Utils.ptSign(ourPtR)}${ourPtR}</div><div class="l">我队PT</div></div>
+          <div class="h2h-stat"><div class="v ${theirPtCls}">${Utils.ptSign(theirPtR)}${theirPtR}</div><div class="l">对方PT</div></div>
+          <div class="h2h-stat"><div class="v ${netCls}">${Utils.ptSign(netPt)}${netPt}</div><div class="l">净优势</div></div>
+        </div>
+        <div class="h2h-record">
+          <div class="h2h-bar">
+            ${o.wins > 0 ? `<div class="h2h-bar-win" style="width:${winRate}%"></div>` : ''}
+            ${o.losses > 0 ? `<div class="h2h-bar-loss" style="width:${100 - winRate}%"></div>` : ''}
+          </div>
+          <div class="h2h-winrate">${o.wins}胜${o.losses}负 · ${winRate}%</div>
+        </div>
+      </div>`;
+    });
+
+    section.innerHTML = html;
   },
 
   hero() {
