@@ -96,10 +96,9 @@ const Data = {
     }
   },
 
-  /** Fetch data.json — let browser cache handle it, add light cache-bust */
+  /** Fetch data.json — let browser cache handle revalidation */
   async fetchDataJson() {
-    const url = `${CONFIG.DATA_JSON}?t=${Date.now()}`;
-    const resp = await fetch(url);
+    const resp = await fetch(CONFIG.DATA_JSON);
     if (!resp.ok) throw new Error(`data.json ${resp.status}`);
     return resp.json();
   },
@@ -701,9 +700,24 @@ const Events = {
     const toggle = $('navToggle');
     const links = $('navLinks');
 
-    // Scroll effect
+    // Combined scroll handler — rAF throttled (was 2 separate listeners)
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = links.querySelectorAll('a');
+    let scrollRaf = null;
     window.addEventListener('scroll', () => {
-      navbar.classList.toggle('scrolled', window.scrollY > 60);
+      if (scrollRaf) return;
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = null;
+        const y = window.scrollY;
+        navbar.classList.toggle('scrolled', y > 60);
+        let current = '';
+        sections.forEach(s => {
+          if (y >= s.offsetTop - 100) current = s.getAttribute('id');
+        });
+        navLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+        });
+      });
     }, { passive: true });
 
     // Mobile menu
@@ -719,19 +733,6 @@ const Events = {
         links.classList.remove('open');
       });
     });
-
-    // Active section highlight
-    const sections = document.querySelectorAll('section[id]');
-    const navLinks = links.querySelectorAll('a');
-    window.addEventListener('scroll', () => {
-      let current = '';
-      sections.forEach(s => {
-        if (window.scrollY >= s.offsetTop - 100) current = s.getAttribute('id');
-      });
-      navLinks.forEach(a => {
-        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
-      });
-    }, { passive: true });
 
     // Smooth scroll
     document.querySelectorAll('a[href^="#"]').forEach(a => {
