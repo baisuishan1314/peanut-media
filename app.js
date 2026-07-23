@@ -197,8 +197,10 @@ function apply(){
   g=document.getElementById('playersGrid');
   if(g)g.innerHTML=appData.players.map(function(x){
     var c=x.totalPt<0?'negative':'',init=x.name?x.name.charAt(0):'?';
-    var img=x.photo?'<img src="'+x.photo+'" alt="'+x.name+'" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.textContent=\''+init+'\'">':init;
-    return '<div class="player-card reveal"><div class="player-photo">'+img+'</div><h3>'+x.name+'</h3><div class="bio">"'+x.bio+'"</div><div class="stats-row"><div><div class="stat-val">'+x.games+'</div><div class="stat-lbl">半庄</div></div><div><div class="stat-val '+c+'">'+ptS(x.totalPt)+x.totalPt+'</div><div class="stat-lbl">总PT</div></div><div><div class="stat-val">'+x.wins+'</div><div class="stat-lbl">1位</div></div></div><div class="rank-dist">'+Array(x.wins||0).fill('<div class="rank-chip win">🥇1</div>').join('')+Array(x.s2||0).fill('<div class="rank-chip s2">🥈2</div>').join('')+Array(x.s3||0).fill('<div class="rank-chip s3">🥉3</div>').join('')+Array(x.s4||0).fill('<div class="rank-chip s4">④4</div>').join('')+'</div></div>';
+    var ph='<div class="player-photo" data-initial="'+init+'">';
+    if(x.photo)ph+='<img src="'+x.photo+'" alt="'+x.name+'" onerror="this.classList.add(\'img-broken\')">';
+    ph+='</div>';
+    return '<div class="player-card reveal">'+ph+'<h3>'+x.name+'</h3><div class="bio">"'+x.bio+'"</div><div class="stats-row"><div><div class="stat-val">'+x.games+'</div><div class="stat-lbl">半庄</div></div><div><div class="stat-val '+c+'">'+ptS(x.totalPt)+x.totalPt+'</div><div class="stat-lbl">总PT</div></div><div><div class="stat-val">'+x.wins+'</div><div class="stat-lbl">1位</div></div></div><div class="rank-dist">'+Array(x.wins||0).fill('<div class="rank-chip win">🥇1</div>').join('')+Array(x.s2||0).fill('<div class="rank-chip s2">🥈2</div>').join('')+Array(x.s3||0).fill('<div class="rank-chip s3">🥉3</div>').join('')+Array(x.s4||0).fill('<div class="rank-chip s4">④4</div>').join('')+'</div></div>';
   }).join('');
 
   // Results
@@ -272,9 +274,10 @@ function openPlayerModal(name){
 
   // Render header
   var init=p.name?p.name.charAt(0):'?';
-  var img=p.photo?'<img src="'+p.photo+'" alt="'+p.name+'" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.textContent=\''+init+'\'">':init;
+  var modalImg='';
+  if(p.photo)modalImg='<img src="'+p.photo+'" alt="'+p.name+'" onerror="this.classList.add(\'img-broken\')">';
   document.getElementById('pmHeader').innerHTML=
-    '<div class="pm-photo">'+img+'</div>'+
+    '<div class="pm-photo" data-initial="'+init+'">'+modalImg+'</div>'+
     '<div class="pm-name">'+p.name+'</div>'+
     '<div class="pm-bio">"'+p.bio+'"</div>'+
     '<div class="pm-summary">'+
