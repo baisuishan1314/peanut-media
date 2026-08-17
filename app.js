@@ -72,6 +72,86 @@ const Charts = {
       legend += `<div class="donut-leg-item"><span class="donut-leg-dot" style="background:${colors[i]}"></span>${labels[i]} ${v} (${pct}%)</div>`;
     });
     return `<div class="donut-wrap"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="donut-chart">${segments}<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="${Math.round(size * 0.24)}" font-weight="800" fill="#eaecf0">${total}</text></svg><div class="donut-legend">${legend}</div></div>`;
+  },
+
+  /** Team cumulative PT trend chart (area + line, zero baseline, min/max/end labels) */
+  trend(results) {
+    if (!results || results.length < 2) return '';
+    // Sort chronologically: date, then round number, then half
+    const sorted = [...results].sort((a, b) =>
+      a.date.localeCompare(b.date) ||
+      Utils.roundNum(a.round) - Utils.roundNum(b.round) ||
+      String(a.half).localeCompare(String(b.half)));
+    let acc = 0;
+    const pts = sorted.map(r => (acc = Utils.roundTo1(acc + r.pt)));
+
+    const W = 720, H = 230, PL = 46, PR = 20, PT = 18, PB = 30;
+    const iw = W - PL - PR, ih = H - PT - PB;
+    const domain = [Math.min(0, ...pts), Math.max(0, ...pts)];
+    const span = domain[1] - domain[0] || 1;
+    const pad = span * 0.12;
+    const yMin = domain[0] - pad, yMax = domain[1] + pad;
+    const x = i => PL + (i / (pts.length - 1)) * iw;
+    const y = v => PT + (1 - (v - yMin) / (yMax - yMin)) * ih;
+
+    const line = pts.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+    const area = `${line} L${x(pts.length - 1).toFixed(1)},${y(yMin).toFixed(1)} L${PL},${y(yMin).toFixed(1)} Z`;
+    const zeroY = y(0).toFixed(1);
+
+    // Labelled points: min, max, last
+    const minI = pts.indexOf(Math.min(...pts));
+    const maxI = pts.indexOf(Math.max(...pts));
+    const lastI = pts.length - 1;
+    const labelSet = [...new Set([minI, maxI, lastI])];
+    let dots = '';
+    labelSet.forEach(i => {
+      const isMax = i === maxI, isLast = i === lastI && i !== maxI && i !== minI;
+      const color = isMax ? '#35b57f' : (pts[i] < 0 ? '#E63950' : '#D4AF37');
+      const anchor = i < pts.length * 0.15 ? 'start' : (i > pts.length * 0.85 ? 'end' : 'middle');
+      const dy = isMax || pts[i] >= 0 ? -10 : 14;
+      dots += `<circle cx="${x(i).toFixed(1)}" cy="${y(pts[i]).toFixed(1)}" r="4" fill="${color}" stroke="#13131f" stroke-width="2"/>` +
+        `<text x="${x(i).toFixed(1)}" y="${(y(pts[i]) + dy).toFixed(1)}" text-anchor="${anchor}" font-size="11" font-weight="700" fill="${color}">${Utils.ptSign(pts[i])}${pts[i]}</text>`;
+    });
+
+    return `<div class="trend-header">
+        <div class="trend-title">赛季PT走势</div>
+        <div class="trend-legend">累计 ${pts.length} 个半庄</div>
+      </div>
+      <svg class="trend-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="队伍累计PT走势图">
+        <defs><linearGradient id="tg-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#D4AF37" stop-opacity=".28"/>
+          <stop offset="100%" stop-color="#D4AF37" stop-opacity="0"/>
+        </linearGradient></defs>
+        <path d="${area}" fill="url(#tg-fill)"/>
+        <line x1="${PL}" y1="${zeroY}" x2="${W - PR}" y2="${zeroY}" stroke="#79828f" stroke-width="1" stroke-dasharray="4 5" opacity=".55"/>
+        <text x="${PL - 6}" y="${zeroY}" text-anchor="end" dominant-baseline="central" font-size="10" fill="#79828f">0</text>
+        <path d="${line}" fill="none" stroke="#D4AF37" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}
+        <text x="${PL}" y="${H - 8}" font-size="10" fill="#79828f">${sorted[0].date}</text>
+        <text x="${W - PR}" y="${H - 8}" text-anchor="end" font-size="10" fill="#79828f">${sorted[sorted.length - 1].date}</text>
+      </svg>`;
+  },
+
+  /** Player cumulative PT sparkline (for player modal) */
+  spark(matches) {
+    if (!matches || matches.length < 2) return '';
+    let acc = 0;
+    const pts = matches.map(m => (acc = Utils.roundTo1(acc + m.pt)));
+    const W = 480, H = 56, PL = 8, PR = 8, PV = 6;
+    const iw = W - PL - PR, ih = H - PV * 2;
+    const yMin = Math.min(0, ...pts), yMax = Math.max(0, ...pts);
+    const span = yMax - yMin || 1;
+    const x = i => PL + (i / (pts.length - 1)) * iw;
+    const y = v => PV + (1 - (v - yMin) / span) * ih;
+    const line = pts.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+    const last = pts[pts.length - 1];
+    const lastColor = last >= 0 ? '#35b57f' : '#E63950';
+    const zeroY = y(0).toFixed(1);
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="累计PT走势">
+      <line x1="${PL}" y1="${zeroY}" x2="${W - PR}" y2="${zeroY}" stroke="#79828f" stroke-width="1" stroke-dasharray="3 4" opacity=".5"/>
+      <path d="${line}" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${x(pts.length - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="3.5" fill="${lastColor}"/>
+    </svg>`;
   }
 };
 
@@ -156,6 +236,7 @@ const Render = {
     this.matchDayBanner();
     this.stats();
     this.ptBar();
+    this.trend();
     this.headToHead();
     this.hero();
     this.dataSource();
@@ -284,7 +365,39 @@ const Render = {
     state.data._filteredUpcoming = upcoming;
 
     if (upcoming.length === 0) {
-      grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3);font-size:.85rem">本赛季已全部完赛</div>';
+      // Season complete — render season summary instead of empty state
+      const title = $('scheduleTitle');
+      const desc = $('scheduleDesc');
+      if (title) title.innerHTML = '2026赛季<span class="gold">完赛总结</span>';
+      if (desc) desc.textContent = '本赛季全部比赛已结束，以下为花生传媒赛季数据总览';
+
+      const standings = state.data.leagueStandings || [];
+      const ourRank = standings.findIndex(s => s.is_ours) + 1;
+      const teamCount = standings.length || 10;
+      const s = state.data.stats || {};
+      const pt = state.data.teamTotalPt || 0;
+      const avgPt = s.totalGames > 0 ? Utils.roundTo1(pt / s.totalGames) : 0;
+      const bp = s.bestPlayer || {};
+      const results = state.data.results || [];
+      const best = results.length ? results.reduce((a, b) => (b.pt > a.pt ? b : a)) : null;
+
+      const summary = `
+        <div class="season-summary${state.firstRender ? ' reveal' : ''}">
+          <div class="season-summary-head">
+            <div class="season-summary-title">RCU League 2026 · 常规赛完赛</div>
+            <div class="season-summary-sub">共 ${s.completedRounds || '--'} 轮 · ${s.totalGames || 0} 个半庄</div>
+          </div>
+          <div class="season-grid">
+            <div class="season-cell"><div class="v gold">第${ourRank || '--'}位</div><div class="l">最终排名 / ${teamCount} 队</div></div>
+            <div class="season-cell"><div class="v ${pt >= 0 ? 'pos' : 'neg'}">${Utils.ptSign(pt)}${pt.toFixed(1)}</div><div class="l">联赛总PT</div></div>
+            <div class="season-cell"><div class="v">${s.totalGames || 0}</div><div class="l">完赛半庄</div></div>
+            <div class="season-cell"><div class="v">${s.totalWins || 0}</div><div class="l">1位次数</div></div>
+            <div class="season-cell"><div class="v ${avgPt >= 0 ? 'pos' : 'neg'}">${Utils.ptSign(avgPt)}${avgPt}</div><div class="l">场均PT</div></div>
+            <div class="season-cell"><div class="v gold">${Utils.escapeHtml(bp.name || '--')}</div><div class="l">队内PT王 (${Utils.ptSign(bp.totalPt)}${bp.totalPt || 0})</div></div>
+          </div>
+          ${best ? `<div class="season-best"><span class="bt">单场最佳</span> ${Utils.escapeHtml(best.player)} · ${Utils.escapeHtml(best.round)} ${best.half} · ${Utils.escapeHtml(best.date)} · <span class="bv">${Utils.ptSign(best.pt)}${best.pt}</span>（${Utils.formatScore(best.score)}点 · ${best.rank}位）</div>` : ''}
+        </div>`;
+      grid.innerHTML = summary;
       return;
     }
 
@@ -320,7 +433,7 @@ const Render = {
       banner.classList.add('show');
       const seen = {}, opps = [];
       (todayMatch.opponents || []).forEach(o => { if (!seen[o]) { seen[o] = 1; opps.push(o); } });
-      $('mdTitle').textContent = '🔥 今日有比赛！';
+      $('mdTitle').textContent = '今日有比赛！';
       $('mdSub').textContent = `${todayMatch.round} · ${todayMatch.time} · 对阵 ${opps.join('、')}`;
 
       // Countdown to match time
@@ -331,7 +444,7 @@ const Render = {
       banner.classList.add('show');
       const seen = {}, opps = [];
       (next.opponents || []).forEach(o => { if (!seen[o]) { seen[o] = 1; opps.push(o); } });
-      $('mdTitle').textContent = '⏰ 下一场比赛';
+      $('mdTitle').textContent = '下一场比赛';
       $('mdSub').textContent = `${next.date} · ${next.time} · ${next.round} · 对阵 ${opps.join('、')}`;
       this._startCountdown(next);
     } else {
@@ -400,11 +513,19 @@ const Render = {
     const s = state.data.stats;
     const p = s.bestPlayer || {};
     const revealCls = state.firstRender ? ' reveal' : '';
+    const ico = (paths, viewBox = '0 0 24 24') =>
+      `<svg width="28" height="28" viewBox="${viewBox}" fill="none" stroke="#D4AF37" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+    const icons = {
+      tile: ico('<rect x="4" y="3" width="10" height="14" rx="2"/><path d="M9 7.5v2M7.6 8.7h2.8M7.6 11h2.8"/><path d="M15 8h4a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-3"/>'),
+      trophy: ico('<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a1 1 0 0 0-1 1c0 2 1.5 3.5 4 4M17 6h3a1 1 0 0 1 1 1c0 2-1.5 3.5-4 4"/>'),
+      trendUp: ico('<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>'),
+      star: ico('<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8L12 3z"/>')
+    };
     grid.innerHTML = `
-      <div class="stat-card${revealCls}"><div class="icon">🀄</div><div class="val">${s.totalGames || 0}</div><div class="lbl">已完成半庄</div></div>
-      <div class="stat-card${revealCls}"><div class="icon">🏆</div><div class="val">${s.totalWins || 0}</div><div class="lbl">1位次数</div></div>
-      <div class="stat-card${revealCls}"><div class="icon">📈</div><div class="val small">${Utils.ptSign(state.data.teamTotalPt)}${(state.data.teamTotalPt || 0).toFixed(1)}</div><div class="lbl">队伍总PT</div></div>
-      <div class="stat-card${revealCls}"><div class="icon">⭐</div><div class="val small">${Utils.escapeHtml(p.name || '--')}</div><div class="lbl">PT王 (${Utils.ptSign(p.totalPt)}${p.totalPt || 0})</div></div>`;
+      <div class="stat-card${revealCls}"><div class="icon">${icons.tile}</div><div class="val">${s.totalGames || 0}</div><div class="lbl">已完成半庄</div></div>
+      <div class="stat-card${revealCls}"><div class="icon">${icons.trophy}</div><div class="val">${s.totalWins || 0}</div><div class="lbl">1位次数</div></div>
+      <div class="stat-card${revealCls}"><div class="icon">${icons.trendUp}</div><div class="val small">${Utils.ptSign(state.data.teamTotalPt)}${(state.data.teamTotalPt || 0).toFixed(1)}</div><div class="lbl">队伍总PT</div></div>
+      <div class="stat-card${revealCls}"><div class="icon">${icons.star}</div><div class="val small">${Utils.escapeHtml(p.name || '--')}</div><div class="lbl">PT王 (${Utils.ptSign(p.totalPt)}${p.totalPt || 0})</div></div>`;
   },
 
   ptBar() {
@@ -465,7 +586,7 @@ const Render = {
 
     section.innerHTML = `
       <div class="pt-bar-header">
-        <div class="pt-bar-title">📊 联赛PT进度对比</div>
+        <div class="pt-bar-title">联赛PT进度对比</div>
         <div class="pt-bar-value ${ptCls}">${Utils.ptSign(pt)}${pt.toFixed(1)}</div>
       </div>
       <div class="pt-bar-track-wide">
@@ -482,6 +603,12 @@ const Render = {
         <div class="pt-bar-leg-item"><span class="pt-leg-dot fourth"></span>前4名 ${fourthPlace ? fourthPlace.team : ''}</div>
         <div class="pt-bar-leg-item"><span class="pt-leg-dot ours"></span>花生传媒 (第${ourRank}名)</div>
       </div>`;
+  },
+
+  trend() {
+    const section = $('trendSection');
+    if (!section || !state.data.results) return;
+    section.innerHTML = Charts.trend(state.data.results);
   },
 
   headToHead() {
@@ -592,6 +719,9 @@ const Render = {
     };
     const label = labels[state.source] || labels['fallback'];
     el.textContent = `${label} · ${state.data.lastUpdated || ''}`;
+    // Footer data timestamp (P3)
+    const ft = $('footerDataTime');
+    if (ft) ft.textContent = `数据更新：${state.data.lastUpdated || '--'}`;
   }
 };
 
@@ -619,7 +749,10 @@ const Modal = {
     if (!p) return;
 
     const matches = (state.data.results || []).filter(r => r.player === p.name || r.playerId === p.id);
-    matches.sort((a, b) => Utils.roundNum(a.round) - Utils.roundNum(b.round));
+    matches.sort((a, b) =>
+      a.date.localeCompare(b.date) ||
+      Utils.roundNum(a.round) - Utils.roundNum(b.round) ||
+      String(a.half).localeCompare(String(b.half)));
 
     const avgPt = matches.length > 0 ? Utils.roundTo1(p.totalPt / matches.length) : 0;
     const winRate = matches.length > 0 ? Math.round(p.wins / matches.length * 100) : 0;
@@ -648,6 +781,10 @@ const Modal = {
         <div class="pm-sum-item"><div class="v">${winRate}%</div><div class="l">1位率</div></div>
       </div>
       <div class="pm-rank-bar" style="margin-top:16px">${rbar}</div>
+      <div class="pm-spark" style="margin-top:16px">
+        <div class="sp-title">累计PT走势（${matches.length}场 · 终点 ${Utils.ptSign(p.totalPt)}${p.totalPt}）</div>
+        ${Charts.spark(matches)}
+      </div>
       ${Charts.donut(p.wins || 0, p.s2 || 0, p.s3 || 0, p.s4 || 0, 80)}
     `);
 
