@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="20260817104330">
+<meta name="app-version" content="20260817111132">
 <title>花生传媒 Peanut Media | RCU League 立直麻将战队</title>
 <meta name="description" content="花生传媒 Peanut Media 立直麻将战队 - RCU League 2026赛季参赛队伍。四人战队：花生、百岁山、有风南来、南风SW。比赛直播：B站 RCU立直联盟">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -23,11 +23,11 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#08080c;--bg2:#0e0e16;--card:#13131f;--card-hover:#181828;
-  --border:rgba(255,255,255,0.05);--border-h:rgba(255,255,255,0.1);
+  --border:rgba(255,255,255,0.07);--border-h:rgba(255,255,255,0.14);
   --red:#C41E3A;--red2:#E63950;--rg:rgba(196,30,58,0.18);
   --gold:#D4AF37;--gold2:#F0C840;--gg:rgba(212,175,55,0.15);
-  --w:#fff;--t1:#eaecf0;--t2:#9ca3af;--t3:#555;
-  --green:#2E8B57;--blue:#4169E1;
+  --w:#fff;--t1:#eaecf0;--t2:#a8b1bf;--t3:#79828f;
+  --green:#35b57f;--blue:#4169E1;
   --pink:#EC4899;--cyan:#06B6D4;--orange:#F97316;--purple:#A855F7;
   --silver:#c0c0c0;--bronze:#cd7f32;
   --mono:'JetBrains Mono','SF Mono','Cascadia Code','Consolas',monospace;
@@ -35,7 +35,7 @@
   --trans:transform .25s ease,background-color .25s ease,border-color .25s ease;
 }
 html{scroll-behavior:auto}
-body{font-family:var(--sans);background:var(--bg);color:var(--t1);overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);overflow-x:hidden;line-height:1.65;-webkit-font-smoothing:antialiased}
 ::selection{background:var(--red);color:#fff}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
@@ -52,7 +52,7 @@ a{text-decoration:none;color:inherit}
 .logo-text{line-height:1.15}
 .logo-text .en{font-size:.68rem;color:var(--gold);letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
 .logo-text .cn{font-size:.88rem;font-weight:800}
-.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links{display:flex;gap:32px;list-style:none}
 .nav-links a{font-size:.82rem;color:var(--t2);font-weight:500;position:relative;transition:var(--trans)}
 .nav-links a::after{content:'';position:absolute;bottom:-5px;left:0;width:0;height:2px;background:var(--red);transition:var(--trans);border-radius:2px}
 .nav-links a:hover,.nav-links a.active{color:var(--t1)}
@@ -80,7 +80,7 @@ a{text-decoration:none;color:inherit}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.2);border-radius:100px;font-size:.72rem;color:var(--gold2);font-weight:600;margin-bottom:24px}
 .hero-badge .dot{width:7px;height:7px;background:var(--gold);border-radius:50%;animation:pulse2 2s infinite}
 @keyframes pulse2{0%,100%{opacity:1}50%{opacity:.3}}
-.hero h1{font-size:clamp(1.8rem,4vw,3.2rem);font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:16px}
+.hero h1{font-size:clamp(1.8rem,4vw,3.2rem);font-weight:900;line-height:1.15;letter-spacing:-.5px;margin-bottom:16px}
 .hero h1 .gold{color:var(--gold)}
 .hero h1 .red{color:var(--red2)}
 .hero p{font-size:.95rem;color:var(--t2);margin-bottom:32px;line-height:1.7;max-width:460px}
@@ -101,12 +101,12 @@ a{text-decoration:none;color:inherit}
 .scoring-hint{font-size:.72rem;color:var(--t3);text-align:center;margin-top:8px;line-height:1.5}
 
 /* SECTIONS */
-section{padding:80px 0;position:relative}
-.section-header{text-align:center;max-width:700px;margin:0 auto 48px}
+section{padding:88px 0;position:relative}
+.section-header{text-align:center;max-width:700px;margin:0 auto 56px}
 .section-tag{display:inline-block;padding:5px 14px;background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.15);border-radius:100px;font-size:.68rem;color:var(--gold2);font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px}
-.section-title{font-size:clamp(1.5rem,2.8vw,2.3rem);font-weight:800;letter-spacing:-.5px;line-height:1.2;margin-bottom:12px}
+.section-title{font-size:clamp(1.5rem,2.8vw,2.3rem);font-weight:800;letter-spacing:0;line-height:1.25;margin-bottom:12px}
 .section-title .gold{color:var(--gold)}
-.section-desc{font-size:.88rem;color:var(--t2);line-height:1.6}
+.section-desc{font-size:.92rem;color:var(--t2);line-height:1.7}
 .section-alt{background:var(--bg2)}
 
 /* DIVIDER */
@@ -152,7 +152,7 @@ section{padding:80px 0;position:relative}
 /* MATCH TABLE */
 .match-table{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;contain:content}
 .match-thead{display:grid;grid-template-columns:80px 60px 50px 100px 90px 70px 80px;gap:12px;padding:14px 20px;background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);font-size:.7rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
-.match-row{display:grid;grid-template-columns:80px 60px 50px 100px 90px 70px 80px;gap:12px;padding:13px 20px;align-items:center;border-bottom:1px solid var(--border);font-size:.84rem;transition:var(--trans)}
+.match-row{display:grid;grid-template-columns:80px 60px 50px 100px 90px 70px 80px;gap:12px;padding:14px 20px;align-items:center;border-bottom:1px solid var(--border);font-size:.86rem;transition:var(--trans)}
 .match-row:last-child{border-bottom:none}
 .match-row:hover{background:var(--card-hover)}
 .match-row.clickable{cursor:pointer;position:relative}
@@ -206,6 +206,7 @@ section{padding:80px 0;position:relative}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px 18px;text-align:center;transition:var(--trans)}
 .stat-card:hover{border-color:var(--border-h);transform:translateY(-2px)}
 .stat-card .icon{font-size:1.8rem;margin-bottom:10px}
+.stat-card .icon svg{display:block;margin:0 auto}
 .stat-card .val{font-family:var(--mono);font-size:2rem;font-weight:900;color:var(--gold);line-height:1}
 .stat-card .val.small{font-size:1.5rem}
 .stat-card .lbl{font-size:.74rem;color:var(--t2);margin-top:6px}
@@ -428,6 +429,36 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
 .h2h-winrate{font-size:.72rem;font-weight:700;color:var(--t2);white-space:nowrap}
 .h2h-empty{text-align:center;padding:40px;color:var(--t3);font-size:.85rem}
 
+/* SEASON SUMMARY */
+.season-summary{background:linear-gradient(135deg,rgba(212,175,55,.07),rgba(196,30,58,.05));border:1px solid rgba(212,175,55,.22);border-radius:16px;padding:32px 28px}
+.season-summary-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.season-summary-title{font-size:1.12rem;font-weight:800;color:var(--gold)}
+.season-summary-sub{font-size:.74rem;color:var(--t3)}
+.season-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.season-cell{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center}
+.season-cell .v{font-family:var(--mono);font-size:1.5rem;font-weight:800;color:var(--t1);line-height:1}
+.season-cell .v.pos{color:var(--green)}
+.season-cell .v.neg{color:var(--red2)}
+.season-cell .v.gold{color:var(--gold)}
+.season-cell .l{font-size:.68rem;color:var(--t3);margin-top:6px}
+.season-best{margin-top:16px;padding:14px 18px;background:rgba(0,0,0,.25);border:1px dashed rgba(212,175,55,.35);border-radius:12px;font-size:.8rem;color:var(--t2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.season-best .bt{font-weight:800;color:var(--gold)}
+.season-best .bv{font-family:var(--mono);font-weight:800;color:var(--green)}
+
+/* TREND CHART */
+.trend-section{margin-top:24px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px}
+.trend-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.trend-title{font-size:.82rem;font-weight:700;color:var(--gold)}
+.trend-legend{font-size:.68rem;color:var(--t3)}
+.trend-svg{width:100%;height:auto;display:block}
+.trend-svg text{font-family:var(--mono)}
+
+/* PLAYER SPARKLINE (modal) */
+.pm-spark{margin:0 24px 18px;border:1px solid var(--border);border-radius:12px;padding:12px 16px;background:rgba(0,0,0,.15)}
+.pm-spark .sp-title{font-size:.64rem;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.pm-spark svg{width:100%;height:56px;display:block}
+.pm-spark text{font-family:var(--mono)}
+
 /* RESPONSIVE */
 @media(max-width:960px){
   .hero-grid{grid-template-columns:1fr;text-align:center}
@@ -470,6 +501,9 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
   .donut-wrap{flex-direction:column;gap:8px}
   .h2h-stats{grid-template-columns:repeat(2,1fr);gap:12px}
   .h2h-summary{grid-template-columns:1fr}
+  .season-grid{grid-template-columns:repeat(2,1fr)}
+  .season-summary{padding:24px 18px}
+  .trend-section{padding:18px 14px}
 }
 @media(max-width:420px){
   .container{padding:0 14px}
@@ -495,6 +529,9 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
   .about-links{flex-direction:column;align-items:stretch}
   .about-links .btn-outline{text-align:center}
   .footer-grid{gap:20px}
+  .season-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .season-cell .v{font-size:1.2rem}
+  .pm-spark{margin:0 16px 16px}
 }
 </style>
 </head>
@@ -639,8 +676,8 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
   <div class="container">
     <div class="section-header reveal">
       <span class="section-tag">Schedule</span>
-      <h2 class="section-title">剩余<span class="gold">赛程</span></h2>
-      <p class="section-desc">花生传媒在RCU League 2026赛季的后续比赛安排</p>
+      <h2 class="section-title" id="scheduleTitle">剩余<span class="gold">赛程</span></h2>
+      <p class="section-desc" id="scheduleDesc">花生传媒在RCU League 2026赛季的后续比赛安排</p>
       <div class="divider"></div>
     </div>
     <!-- MATCH DAY BANNER -->
@@ -672,6 +709,9 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
 
     <!-- PT PROGRESS BAR -->
     <div class="pt-bar-section reveal" id="ptBarSection"></div>
+
+    <!-- TEAM PT TREND -->
+    <div class="trend-section reveal" id="trendSection"></div>
   </div>
 </section>
 
@@ -748,7 +788,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:48px 0 2
     </div>
     <div class="footer-bottom">
       <div>(c) 2026 花生传媒 Peanut Media · RCU League Team 04</div>
-      <div>数据来源：<a href="http://rcu-league.com/" target="_blank" rel="noopener">rcu-league.com</a></div>
+      <div>数据来源：<a href="http://rcu-league.com/" target="_blank" rel="noopener">rcu-league.com</a> · <span id="footerDataTime">同步中...</span></div>
     </div>
   </div>
 </footer>
